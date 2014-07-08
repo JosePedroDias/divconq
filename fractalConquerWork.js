@@ -23,7 +23,7 @@ var conquerWork = function(cfg, results) {
     }
  
     var buf = canvasEl.toBuffer();
-    fs.writeFileSync('a.png', buf);
+    fs.writeFileSync(cfg.jobId + '.png', buf);
 
-    //console.log('...');
+    console.log('done #' + results[0].index);
 };

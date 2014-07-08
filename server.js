@@ -62,21 +62,20 @@ var expandTemplate = function(tplS, modelO) {
 var getMyIPs = function() {
     var ips = {};
     var ifaces = os.networkInterfaces();
- 
     var onDetails = function(details) {
         if (details.family === 'IPv4') {
             ips[ dev ] = details.address;
         }
     };
- 
     for (var dev in ifaces) {
         ifaces[dev].forEach(onDetails);
-    }
- 
+    } 
     return ips;
 };
 
-// TODO: https://gist.github.com/JosePedroDias/9634398 canvas drawing in nodejs (for reduce)
+var PORT = 4000;
+
+var domain = ['http://', getMyIPs()['lo'], ':', PORT].join('');
 
 
 
@@ -85,10 +84,6 @@ var files = {
     all:  loadFile('tplClientAll.js'),
     core: loadFile('divconqClientCore.js')
 };
-
-
-
-var PORT = 4000;
 
 
 
@@ -135,6 +130,7 @@ var srv = http.createServer(function(req, res) {
                 sandbox
             );
             var cfg2 = sandbox.cfg2;
+            cfg2.answerTo = [domain, workKind, 'onex'].join('/');
             var body = expandTemplate(tpl, {
                 DIVCONQ_CORE: divConqCore,
                 WORKER:       wkWorker,
@@ -186,15 +182,4 @@ var srv = http.createServer(function(req, res) {
 
 srv.listen(PORT);
 
-
-
-// output listening URLs
-(function() {
-    var ipsHash = getMyIPs();
-    var interfaces = Object.keys(ipsHash);
-    console.log(
-        interfaces.map( function(itf) {
-            return [itf, ' -> http://', ipsHash[itf], ':', PORT, '\n'].join('');
-        }).join('')
-    );
-})();
+console.log('running on ' + domain + ' ...');
