@@ -1,15 +1,29 @@
 {
   "name": "divconq",
   "version": "0.0.0",
-  "description": "Working for now:",
+  "description": "distributed work on browsers webworkers",
   "main": "server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node server.js"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "canvas": "~1.1.5"
-  }
+    "canvas": "~1.1.5",
+    "hiredis": "^0.1.17",
+    "redis": "^0.10.3"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/JosePedroDias/divconq.git"
+  },
+  "keywords": [
+    "javascript",
+    "browser",
+    "redis",
+    "map",
+    "reduce",
+    "distributed",
+    "webworker"
+  ]
 }

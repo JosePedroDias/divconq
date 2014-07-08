@@ -3,6 +3,8 @@ var http   = require('http');
 var os     = require('os');
 var vm     = require('vm');
 var Canvas = require('canvas'); // libgif-dev libjpeg-dev libcairo2-dev
+
+var redis = require('redis');
  
 
 
@@ -33,7 +35,7 @@ var getMyIPs = function() {
 
 var PORT = 4000;
 
-var domain = ['http://', getMyIPs()['lo'], ':', PORT].join('');
+var domain = ['http://', getMyIPs().lo, ':', PORT].join('');
 
 
 
