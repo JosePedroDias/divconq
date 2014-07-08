@@ -14,7 +14,7 @@ var code = function() {/*
 
 
 
-{{CFG}}
+var cfg = {{CFG}};
 
 
 

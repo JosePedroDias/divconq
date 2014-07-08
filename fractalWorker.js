@@ -33,34 +33,30 @@ self.onmessage = function(ev) {
     var maxIter = o.iter;
     postMessage({m: ['start', w, h, tl.i, tl.r, br.i, br.r, maxIter].join(' ') });
 
-    //try {
-
-    var i, row, column;
-    var drow = (br.i - tl.i) / h;
-    var dcol = (br.r - tl.r) / w;
+    var i, y, x;
+    var dy = (br.i - tl.i) / h;
+    var dx = (br.r - tl.r) / w;
     var iter;
-    for (row = 0; row < h; ++row) {
-        for (column = 0; column < w; ++column) {
-            var p = {r: tl.r + column*dcol, i: tl.i + row*drow };
+    for (y = 0; y < h; ++y) {
+        for (x = 0; x < w; ++x) {
+            var p = {r: tl.r + x*dx, i: tl.i + y*dy };
             var v = {r: 0, i: 0}
             iter = 0;
 
             while (CPX.abs2(v) < 4 && iter < maxIter) {
                 v = CPX.add( CPX.multiply(v, v), p);
-                iter++;
+                ++iter;
             }
             
             if (iter > 255) { iter %= 255; }
 
-            var index = (row*w + column) * 4;
-            imgData.data[index+0] = iter % 255;
-            imgData.data[index+1] = iter % 255;
-            imgData.data[index+2] = iter % 255;
+            var index = (y*w + x) * 4;
+            imgData.data[index  ] = iter;
+            imgData.data[index+1] = iter;
+            imgData.data[index+2] = iter;
             imgData.data[index+3] = 255;
         }
     }
-
-    //} catch(ex) { console.error(ex); }
 
     postMessage({id:imgData, m:'end', index:o.index, ir:o.ir, ii:o.ii, d:o.d});
 };

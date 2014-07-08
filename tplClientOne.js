@@ -14,11 +14,7 @@ var code = function() {/*
 
 
 
-{{CFG}}
-
-
-
-{{DIVIDE_WORK}}
+var cfg = {{CFG}};
 
 
 

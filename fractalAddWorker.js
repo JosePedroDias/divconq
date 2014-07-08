@@ -1,6 +1,7 @@
 var addWorker = function(index) {
-    cfg.index = index;
-    var payload = divideWork(cfg);
+    //cfg.index = index;
+    //var payload = divideWork(cfg);
+    var payload = cfg;
     var worker = createWorker(code);
     
     // worker aux resources
@@ -17,7 +18,7 @@ var addWorker = function(index) {
             ctx.putImageData(o.id, 0, 0);
             var b64Result = cvsEl.toDataURL('image/jpeg');
 
-            if (1) { // show computed image (optional)
+            if (0) { // show computed image (optional)
                 var imgEl = document.createElement('img');
                 imgEl.src = b64Result;
                 var s = imgEl.style;
@@ -32,10 +33,28 @@ var addWorker = function(index) {
             document.body.removeChild(cvsEl);
             cvsEl = undefined; imgData = undefined; ctx = undefined; delete o.id; delete o.m;
             
-            if (0) {
+            if (1) {
                 o.resultImg = b64Result;
                 o.jobId = cfg.jobId;
                 console.log('SENDING BACK TO SERVER...', o);
+
+                var ajax = function(uri, data, cb) {
+                    var xhr = new XMLHttpRequest();
+                    xhr.open('POST', uri, true);
+                    var cbInner = function() {
+                        if (xhr.readyState === 4 && xhr === 200) {
+                            return cb(null, JSON.parse(xhr.response));
+                        }
+                        cb('error requesting ' + uri);
+                    };
+                    xhr.onload = cbInner;
+                    xhr.onerror = cbInner;
+                    xhr.send( JSON.stringify(o) );
+                };
+
+                ajax('http://127.0.0.1:4000/fractal/onex', o, function(err, res) {
+                    console.log(err, res);
+                });
             }
             
             // could send result back now, logging instead
