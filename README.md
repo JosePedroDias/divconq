@@ -24,7 +24,7 @@ Besides, the input and output of the payloads should be somewhat small (CPU-boun
 
 ## process
 
-### defining workKind
+### 1. defining workKind
 
 * client submits worker code
 * client submits divide function
@@ -32,14 +32,14 @@ Besides, the input and output of the payloads should be somewhat small (CPU-boun
 * a workKind is defined
 
 
-### work is submitted
+### 2. work is submitted
 
 * client submits a problem (cfg)
 * a work is defined
 * system runs the divide function, generating a set of sub-problems treatable by webworkers (payloads)
 
 
-### work processing
+### 3. work processing
 
 * each contributer site hosting a divconq script is a potential worker
 * if an unfinished work exists, a payload and worker code is sent to the contributer
@@ -49,28 +49,7 @@ Besides, the input and output of the payloads should be somewhat small (CPU-boun
 
 
 
-## done / todo
+## todo
 
-* __DONE__ fractal problem solved locally with webworkers in parallel
-* __DONE__ fractal problem split into the conceptual parts (conquer pending)
-
-* fractal solved in different remote webworkers
-* fractal 
-* kpis for start of workUnit?!
+* store states
 * generic worker examples with and without canvas
-
-
-
-## maybe...
-
-generalize the concept into node-spawned webworker thingies too (is it viable?)
-
-
-
-## working:
-
-`GET /<workKind>/<tplKind>`
-
-`/fractal/all`
-
-`/fractal/one`

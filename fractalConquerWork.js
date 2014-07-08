@@ -1,6 +1,4 @@
 var conquerWork = function(cfg, results) {
-    var Image = Canvas.Image;
-
     var W = cfg.d[0];
     var H = cfg.d[1];
     var w = results[0].d[0];

@@ -81,7 +81,6 @@ var domain = ['http://', getMyIPs()['lo'], ':', PORT].join('');
 
 var files = {
     one:  loadFile('tplClientOne.js'),
-    all:  loadFile('tplClientAll.js'),
     core: loadFile('divconqClientCore.js')
 };
 
@@ -98,39 +97,40 @@ var srv = http.createServer(function(req, res) {
         return res.end();
     }
 
-    var workKind = parts[0];
-    var tplKind  = parts[1];
+    var workKind = 'fractal'; // TODO elect pending jobs, workKind and id
 
     try {
-        var divConqCore = files.core;
-        var tpl = files[tplKind];
+        var divConqCore   = files.core;
+        var tpl           = files.one;
         var wkWorker      = loadFile(workKind + 'Worker.js');
         var wkCfg         = loadFile(workKind + 'Cfg.js');
         var wkDivideWork  = loadFile(workKind + 'DivideWork.js');
         var wkAddWorker   = loadFile(workKind + 'AddWorker.js');
         var wkConquerWork = loadFile(workKind + 'ConquerWork.js');
+        
+        if (parts[0] === 'ask') {
 
-        if (tplKind === 'all') {
-            var body = expandTemplate(tpl, {
-                DIVCONQ_CORE: divConqCore,
-                WORKER:       wkWorker,
-                CFG:          wkCfg,
-                DIVIDE_WORK:  wkDivideWork,
-                ADD_WORKER:   wkAddWorker
-            });
-        }
-        else if (tplKind === 'one') {
-            var sandbox = {};
-            vm.runInNewContext(
-                [
-                    'var cfg = ', wkCfg, ';',
-                    wkDivideWork, ';',
-                    'var cfg2 = divideWork(cfg);'
-                ].join(''),
-                sandbox
-            );
-            var cfg2 = sandbox.cfg2;
-            cfg2.answerTo = [domain, workKind, 'onex'].join('/');
+            // TODO if new job, divide it and save parts
+            if (1) {
+                var sandbox = {};
+                vm.runInNewContext(
+                    [
+                        'var cfg = ', wkCfg, ';',
+                        wkDivideWork, ';',
+                        'var cfg2 = divideWork(cfg);'
+                    ].join(''),
+                    sandbox
+                );
+                var cfg2 = sandbox.cfg2;
+
+                cfg2.answerTo = [domain, 'answer'].join('/');
+            }
+            else {
+                // TODO else, fetch path
+            }
+
+            // TODO update jobs state
+
             var body = expandTemplate(tpl, {
                 DIVCONQ_CORE: divConqCore,
                 WORKER:       wkWorker,
@@ -138,7 +138,7 @@ var srv = http.createServer(function(req, res) {
                 ADD_WORKER:   wkAddWorker
             });
         }
-        else if (tplKind === 'onex') {
+        else if (parts[0] === 'answer') {
             var parts = [];
             req.on('data', function(data) {
                 parts.push(data);
@@ -148,14 +148,20 @@ var srv = http.createServer(function(req, res) {
                 //var o = JSON.parse(d);
                 console.log('received ' + d.length + ' bytes');
 
-                vm.runInNewContext(
-                    [wkConquerWork, ';conquerWork(', wkCfg, ', [', d,']);'].join(''),
-                    {console:console, fs:fs, Canvas:Canvas}
-                );
+                // TODO save result
+
+                if (1) { // if all results came, conquer
+                    vm.runInNewContext(
+                        [wkConquerWork, ';conquerWork(', wkCfg, ', [', d,']);'].join(''),
+                        {console:console, fs:fs, Canvas:Canvas, Image:Canvas.Image}
+                    );   
+                    // update job state to finished 
+                }
             });
-            var body = '{}';
+            var body = '{"status":"OK"}';
             res.writeHead(200, {
                 'Access-Control-Allow-Origin': '*',
+                'Content-Type':                'application/json; charset=utf-8',
                 'Content-Length':              body.length
             });
             return res.end(body);
