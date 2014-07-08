@@ -21,3 +21,18 @@ var createCanvas = function(dims) {
     document.body.appendChild(cvsEl);
     return cvsEl;
 };
+
+var postJSON = function(uri, data, cb) {
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', uri, true);
+    var cbInner = function() {
+        //console.log(xhr.readyState, xhr.status);
+        if (xhr.readyState === 4 && xhr.status === 200) {
+            return cb(null, JSON.parse(xhr.response));
+        }
+        cb('postJSON: error requesting ' + uri);
+    };
+    xhr.onload = cbInner;
+    xhr.onerror = cbInner;
+    xhr.send( JSON.stringify(data) );
+};

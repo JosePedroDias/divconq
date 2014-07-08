@@ -137,6 +137,12 @@ var srv = http.createServer(function(req, res) {
                 CFG:          JSON.stringify(cfg2),
                 ADD_WORKER:   wkAddWorker
             });
+
+            res.writeHead(200, {
+                'Content-Type':   'text/javascript; charset=utf-8',
+                'Content-Length': body.length
+            });
+            return res.end(body);
         }
         else if (parts[0] === 'answer') {
             var parts = [];
@@ -166,24 +172,13 @@ var srv = http.createServer(function(req, res) {
             });
             return res.end(body);
         }
-
-        res.writeHead(
-            200,
-            {
-                'Content-Type':   'text/javascript; charset=utf-8',
-                'Content-Length': body.length
-            }
-        );
-        return res.end(body);
-
     } catch (ex) {
-        res.writeHead(404);
-        return res.end(ex.toString());
-        //res.end(ex.toString()); throw ex;
+        res.writeHead(500);
+        return res.end([ex.toString(), ex.stackTrace()].join('\n'));
     }
 
     res.writeHead(404);
-    return res.end('?');
+    res.end('unsupported path');
 });
 
 srv.listen(PORT);
