@@ -1,45 +1,3 @@
-/*
-
-PRODUCER                                                         SERVER
-
-producer submits script functions 
-                                       -->       new jobKind created with the code
-producer submits config data 
-                                       -->       new job is created, it's id returned
-...
-
-producer checks state of job
-                                       -->      
-
-
-
-----------------------------
-
-
-PARTS
-
-cfg -> divideWork
-addWorker
-worker
-conquer
-
-
-CLIENT                    SERVER
-
-divconq.js
-               ->       select one job from pending jobs
-                        select on index from pending ids in job
-                        generate js for job with job code. include index
-                        update job index state from unprocessed to processing
-               <-
-create webworker
-let it process
-return result back
-
-*/
-
-
-
 var fs     = require('fs');
 var http   = require('http');
 var os     = require('os');
@@ -80,8 +38,8 @@ var domain = ['http://', getMyIPs()['lo'], ':', PORT].join('');
 
 
 var files = {
-    one:  loadFile('tplClientOne.js'),
-    core: loadFile('divconqClientCore.js')
+    tpl:  loadFile('tpl.js'),
+    core: loadFile('core.js')
 };
 
 
@@ -90,9 +48,11 @@ var srv = http.createServer(function(req, res) {
 
     var parts = req.url.split('/');
     parts.shift();
+
+    var op = parts[0];
     //console.log( parts );
 
-    if (parts[0] === 'favicon.ico') {
+    if (op === 'favicon.ico') {
         res.writeHead(404);
         return res.end();
     }
@@ -100,15 +60,12 @@ var srv = http.createServer(function(req, res) {
     var workKind = 'fractal'; // TODO elect pending jobs, workKind and id
 
     try {
-        var divConqCore   = files.core;
-        var tpl           = files.one;
-        var wkWorker      = loadFile(workKind + 'Worker.js');
         var wkCfg         = loadFile(workKind + 'Cfg.js');
         var wkDivideWork  = loadFile(workKind + 'DivideWork.js');
-        var wkAddWorker   = loadFile(workKind + 'AddWorker.js');
+        var wkWorker      = loadFile(workKind + 'Worker.js');
         var wkConquerWork = loadFile(workKind + 'ConquerWork.js');
         
-        if (parts[0] === 'ask') {
+        if (op === 'ask') {
 
             // TODO if new job, divide it and save parts
             if (1) {
@@ -117,13 +74,16 @@ var srv = http.createServer(function(req, res) {
                     [
                         'var cfg = ', wkCfg, ';',
                         wkDivideWork, ';',
-                        'var cfg2 = divideWork(cfg);'
+                        'var cfgs = divideWork(cfg);'
                     ].join(''),
                     sandbox
                 );
-                var cfg2 = sandbox.cfg2;
+                var cfgs = sandbox.cfgs;
+                //console.log(cfgs);
+                var cfg2 = cfgs[0];
 
                 cfg2.answerTo = [domain, 'answer'].join('/');
+                cfg2.kpiTo    = [domain, 'kpi'].join('/');
             }
             else {
                 // TODO else, fetch path
@@ -131,11 +91,10 @@ var srv = http.createServer(function(req, res) {
 
             // TODO update jobs state
 
-            var body = expandTemplate(tpl, {
-                DIVCONQ_CORE: divConqCore,
-                WORKER:       wkWorker,
-                CFG:          JSON.stringify(cfg2),
-                ADD_WORKER:   wkAddWorker
+            var body = expandTemplate(files.tpl, {
+                CORE:   files.core,
+                WORKER: wkWorker,
+                CFG:    JSON.stringify(cfg2)
             });
 
             res.writeHead(200, {
@@ -144,7 +103,7 @@ var srv = http.createServer(function(req, res) {
             });
             return res.end(body);
         }
-        else if (parts[0] === 'answer') {
+        else if (op === 'answer') {
             var parts = [];
             req.on('data', function(data) {
                 parts.push(data);
@@ -152,7 +111,7 @@ var srv = http.createServer(function(req, res) {
             req.on('end', function() {
                 var d = parts.join('');
                 //var o = JSON.parse(d);
-                console.log('received ' + d.length + ' bytes');
+                //console.log('received ' + d.length + ' bytes');
 
                 // TODO save result
 
@@ -161,7 +120,8 @@ var srv = http.createServer(function(req, res) {
                         [wkConquerWork, ';conquerWork(', wkCfg, ', [', d,']);'].join(''),
                         {console:console, fs:fs, Canvas:Canvas, Image:Canvas.Image}
                     );   
-                    // update job state to finished 
+
+                    // TODO update job state to finished 
                 }
             });
             var body = '{"status":"OK"}';
@@ -172,13 +132,32 @@ var srv = http.createServer(function(req, res) {
             });
             return res.end(body);
         }
+        else if (op === 'kpi') {
+            console.log('KPI:');
+            console.log('  data:      ' + decodeURIComponent(parts[1]) );
+            console.log('  userAgent: ' + req.headers['user-agent']);
+            console.log('  referer:   ' + req.headers.referer);
+            console.log('  host:      ' + req.headers.host);
+            console.log('  ip:        ' + req.connection.remoteAddress);
+            res.writeHead(200, {
+                'Content-Type':   'image/png',
+                'Cache-Control':  'no-cache, no-store, must-revalidate',
+                'Pragma':         'no-cache',
+                'Expires':        '0',
+                'Content-Length': '0'
+            });
+            res.end();
+
+            // TODO save data?
+        }
     } catch (ex) {
+        throw ex;
         res.writeHead(500);
-        return res.end([ex.toString(), ex.stackTrace()].join('\n'));
+        return res.end([ex.toString(), ex.stacktrace()].join('\n'));
     }
 
     res.writeHead(404);
-    res.end('unsupported path');
+    res.end('unsupported path: "' + req.url + '"');
 });
 
 srv.listen(PORT);

@@ -1,6 +1,6 @@
-'use strict';
-
 // based on https://github.com/jacksondk/fractal/blob/master/js/fractal.js
+
+//log('starting');
 
 var CPX = {
     add: function(a, b) {
@@ -23,15 +23,21 @@ var CPX = {
     }
 };
 
-self.onmessage = function(ev) {
-    var o = ev.data;
+//throw 'x';
+//x.y = 2;
+
+var onMessage = function(o) {
+    //throw 'y';
     var imgData = o.id;
     var w = o.d[0];
     var h = o.d[1];
     var tl = o.tl;
     var br = o.br;
     var maxIter = o.iter;
-    postMessage({m: ['start', w, h, tl.i, tl.r, br.i, br.r, maxIter].join(' ') });
+
+    //log(o.id ? 'Y':'N');
+    //log(JSON.stringify(o));
+    //log(['received', w, h, tl.i, tl.r, br.i, br.r, maxIter].join(' '));
 
     var i, y, x;
     var dy = (br.i - tl.i) / h;
@@ -58,5 +64,11 @@ self.onmessage = function(ev) {
         }
     }
 
-    postMessage({id:imgData, m:'end', index:o.index, ir:o.ir, ii:o.ii, d:o.d});
+    done({
+        id:    imgData,
+        index: o.index,
+        ir:    o.ir,
+        ii:    o.ii,
+        d:     o.d
+    });
 };
