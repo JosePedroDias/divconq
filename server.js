@@ -4,8 +4,8 @@ var os     = require('os');
 var vm     = require('vm');
 var Canvas = require('canvas'); // libgif-dev libjpeg-dev libcairo2-dev
 
-var pers = require('./persistenceFake')();
-//var pers = require('./persistenceLevel')();
+// var pers = require('./persistenceFake')();
+var pers = require('./persistenceLevel')();
 //var pers = require('./persistenceRedis')();
 
 //var redis = require('redis');
@@ -67,7 +67,7 @@ var srv = http.createServer(function(req, res) {
     var workKind = 'fractal'; // TODO elect pending jobs, workKind and id
 
     var cb, body;
-    if (op === 'job_kind' || op === 'job') {
+    if (op === 'kind' || op === 'job' || op === 'result') {
         cb = function(err, result) {
             //console.log('CB CALLED WITH ', err, result);
             var o = err ? {status:'error', error:err.toString()} : {status:'ok'};
@@ -183,33 +183,41 @@ var srv = http.createServer(function(req, res) {
             });
             return res.end(body);
         }
-        else if (op === 'job_kind') {
+        else if (op === 'kind') {
             if (parts[1] === 'new') {
-                return pers.createNewJobKind('name', 'divideFn', 'workerFn', 'conquerFn', cb);
+                return pers.createKind('name', 'divideFn', 'workerFn', 'conquerFn', cb);
             }
             else if (parts[1] === 'update') {
-                return pers.updateJobKind(parts[2], 'name', 'divideFn', 'workerFn', 'conquerFn', cb);
+                return pers.updateKind(parts[2], 'name', 'divideFn', 'workerFn', 'conquerFn', cb);
             }
             else if (parts[1] === 'all') {
-                return pers.getJobKinds(cb);
+                return pers.getKinds(cb);
             }
+            return pers.getKind(parts[1], cb);
         }
         else if (op === 'job') {
-            if (parts[1] === 'new') {
-                return pers.createNewJob('jobKindId', 'cfg', cb);
+            if (parts[2] === 'new') {
+                return pers.createJob(parts[1], '{}', cb);
             }
             else if (parts[1] === 'an_active') {
                 return pers.getAnActiveJob(cb);
             }
-            else if (parts[1] === 'results') {
-                return pers.getJobResults(parts[2], cb);
-            }
             else if (parts[1] === 'all') {
                 return pers.getJobs(cb);
             }
+            return pers.getJob(parts[1], parts[2], cb);
+        }
+        else if (op === 'part') {
+            return pers.getPart(parts[1], parts[2], parts[3], cb);
+        }
+        /*else if (op === 'answer') {
+            return pers.setAnswer(parts[1], parts[2], parts[3], cb);
+        }*/
+        else if (op === 'result') {
+            return pers.getResult(parts[1], parts[2], cb);
         }
     } catch (ex) {
-        throw ex;
+        //throw ex;
         res.writeHead(500);
         return res.end([ex.toString(), ex.stacktrace()].join('\n'));
     }
