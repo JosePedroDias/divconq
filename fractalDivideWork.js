@@ -1,4 +1,3 @@
-var divideWork = function(cfg, index) {
     var l = cfg.parts[0] * cfg.parts[1];
     var cfgs = new Array(l);
 
@@ -20,6 +19,3 @@ var divideWork = function(cfg, index) {
             ii:        ii
         };
     }
-    
-    return cfgs;
-};

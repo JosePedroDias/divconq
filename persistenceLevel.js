@@ -57,8 +57,8 @@ var persistence = function() {
 
     var api = {
 
-        createKind: function(name, divideFn, workerFn, conquerFn, cb) { // returns kindId // kind/new
-            log('createKind', [divideFn, workerFn, conquerFn]);
+        createKind: function(name, divideFn, worker, conquerFn, cb) { // returns kindId // kind/new
+            log('createKind', [divideFn, worker, conquerFn]);
 
             getNextId('kind', function(err, kId) {
                 if (err) { return cb(err); }
@@ -67,7 +67,7 @@ var persistence = function() {
                     id:        kId,
                     name:      name,
                     divideFn:  divideFn,
-                    workerFn:  workerFn,
+                    worker:    worker,
                     conquerFn: conquerFn
                 };
                 o = JSON.stringify(o);
@@ -92,8 +92,8 @@ var persistence = function() {
             });
         },
 
-        updateKind: function(kId, name, divideFn, workerFn, conquerFn, cb) { // kind/update/<kId>
-            log('updateKind', [kId, name, divideFn, workerFn, conquerFn]);
+        updateKind: function(kId, name, divideFn, worker, conquerFn, cb) { // kind/update/<kId>
+            log('updateKind', [kId, name, divideFn, worker, conquerFn]);
 
             kId = parseInt(kId, 10);
             if (isNaN(kId)) { return cb('invalid kId!'); }
@@ -102,7 +102,7 @@ var persistence = function() {
                 id:        kId,
                 name:      name,
                 divideFn:  divideFn,
-                workerFn:  workerFn,
+                worker:    worker,
                 conquerFn: conquerFn
             };
             o = JSON.stringify(o);
@@ -169,10 +169,10 @@ var persistence = function() {
             });
         },
 
-        getAnActiveJob: function(cb) { // returns {divideFn, workerFn, conquerFn, jobId} // job/an_active
+        getAnActiveJob: function(cb) { // returns {divideFn, worker, conquerFn, jobId} // job/an_active
             log('getAnActiveJob', []);
             // TODO STORE
-            setImmediate(function() { cb(null, {divideFn:'d', workerFn:'w', conquerFn:'w', jobId:'j1'}); });
+            setImmediate(function() { cb(null, {divideFn:'d', worker:'w', conquerFn:'w', jobId:'j1'}); });
         },
 
         getJobs: function(cb) { // job/all

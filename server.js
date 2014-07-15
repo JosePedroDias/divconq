@@ -2,7 +2,7 @@ var fs     = require('fs');
 var http   = require('http');
 var os     = require('os');
 var vm     = require('vm');
-var Canvas = require('canvas'); // libgif-dev libjpeg-dev libcairo2-dev
+var Canvas = require('canvas'); // sudo apt-get install libgif-dev libjpeg-dev libcairo2-dev
 
 // var pers = require('./persistenceFake')();
 var pers = require('./persistenceLevel')();
@@ -177,6 +177,14 @@ var srv = http.createServer(function(req, res) {
         }
         else if (op === 'manage') {
             body = files.manage;
+
+            body = expandTemplate(body, {
+                DIVIDE:  wkDivideWork,
+                WORKER:  wkWorker,
+                CONQUER: wkConquerWork,
+                CFG:     wkCfg
+            });
+
             res.writeHead(200, {
                 'Content-Type':   'text/html; charset=utf-8',
                 'Content-Length': body.length
@@ -185,10 +193,10 @@ var srv = http.createServer(function(req, res) {
         }
         else if (op === 'kind') {
             if (parts[1] === 'new') {
-                return pers.createKind('name', 'divideFn', 'workerFn', 'conquerFn', cb);
+                return pers.createKind('name', 'divideFn', 'worker', 'conquerFn', cb);
             }
             else if (parts[1] === 'update') {
-                return pers.updateKind(parts[2], 'name', 'divideFn', 'workerFn', 'conquerFn', cb);
+                return pers.updateKind(parts[2], 'name2', 'divideFn2', 'worker2', 'conquerFn2', cb);
             }
             else if (parts[1] === 'all') {
                 return pers.getKinds(cb);

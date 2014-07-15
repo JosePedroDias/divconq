@@ -1,4 +1,3 @@
-var conquerWork = function(cfg, results) {
     var W = cfg.d[0];
     var H = cfg.d[1];
     var w = results[0].d[0];
@@ -24,4 +23,3 @@ var conquerWork = function(cfg, results) {
     fs.writeFileSync(cfg.jobId + '.png', buf);
 
     console.log('done #' + results[0].index);
-};
