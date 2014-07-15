@@ -4,8 +4,12 @@ var os     = require('os');
 var vm     = require('vm');
 var Canvas = require('canvas'); // libgif-dev libjpeg-dev libcairo2-dev
 
-var redis = require('redis');
- 
+var pers = require('./persistenceFake')();
+//var pers = require('./persistenceLevel')();
+//var pers = require('./persistenceRedis')();
+
+//var redis = require('redis');
+
 
 
 var loadFile = function(path) {
@@ -40,8 +44,9 @@ var domain = ['http://', getMyIPs().lo, ':', PORT].join('');
 
 
 var files = {
-    tpl:  loadFile('tpl.js'),
-    core: loadFile('core.js')
+    tpl:    loadFile('tpl.js'),
+    core:   loadFile('core.js'),
+    manage: loadFile('manage.html')
 };
 
 
@@ -61,6 +66,23 @@ var srv = http.createServer(function(req, res) {
 
     var workKind = 'fractal'; // TODO elect pending jobs, workKind and id
 
+    var cb, body;
+    if (op === 'job_kind' || op === 'job') {
+        cb = function(err, result) {
+            //console.log('CB CALLED WITH ', err, result);
+            var o = err ? {status:'error', error:err.toString()} : {status:'ok'};
+            if (!err && result) {
+                o.result = result;
+            }
+            body = JSON.stringify(o);
+            res.writeHead(200, {
+                'Content-Type':   'application/json; charset=utf-8',
+                'Content-Length': body.length
+            });
+            return res.end(body);
+        };
+    }
+
     try {
         var wkCfg         = loadFile(workKind + 'Cfg.js');
         var wkDivideWork  = loadFile(workKind + 'DivideWork.js');
@@ -70,6 +92,7 @@ var srv = http.createServer(function(req, res) {
         if (op === 'ask') {
 
             // TODO if new job, divide it and save parts
+            var cfg2;
             if (1) {
                 var sandbox = {};
                 vm.runInNewContext(
@@ -82,7 +105,7 @@ var srv = http.createServer(function(req, res) {
                 );
                 var cfgs = sandbox.cfgs;
                 //console.log(cfgs);
-                var cfg2 = cfgs[0];
+                cfg2 = cfgs[0];
 
                 cfg2.answerTo = [domain, 'answer'].join('/');
                 cfg2.kpiTo    = [domain, 'kpi'].join('/');
@@ -93,7 +116,7 @@ var srv = http.createServer(function(req, res) {
 
             // TODO update jobs state
 
-            var body = expandTemplate(files.tpl, {
+            body = expandTemplate(files.tpl, {
                 CORE:   files.core,
                 WORKER: wkWorker,
                 CFG:    JSON.stringify(cfg2)
@@ -106,12 +129,12 @@ var srv = http.createServer(function(req, res) {
             return res.end(body);
         }
         else if (op === 'answer') {
-            var parts = [];
+            var parts2 = [];
             req.on('data', function(data) {
-                parts.push(data);
+                parts2.push(data);
             });
             req.on('end', function() {
-                var d = parts.join('');
+                var d = parts2.join('');
                 //var o = JSON.parse(d);
                 //console.log('received ' + d.length + ' bytes');
 
@@ -126,7 +149,7 @@ var srv = http.createServer(function(req, res) {
                     // TODO update job state to finished 
                 }
             });
-            var body = '{"status":"OK"}';
+            body = '{"status":"OK"}';
             res.writeHead(200, {
                 'Access-Control-Allow-Origin': '*',
                 'Content-Type':                'application/json; charset=utf-8',
@@ -151,6 +174,39 @@ var srv = http.createServer(function(req, res) {
             res.end();
 
             // TODO save data?
+        }
+        else if (op === 'manage') {
+            body = files.manage;
+            res.writeHead(200, {
+                'Content-Type':   'text/html; charset=utf-8',
+                'Content-Length': body.length
+            });
+            return res.end(body);
+        }
+        else if (op === 'job_kind') {
+            if (parts[1] === 'new') {
+                return pers.createNewJobKind('name', 'divideFn', 'workerFn', 'conquerFn', cb);
+            }
+            else if (parts[1] === 'update') {
+                return pers.updateJobKind(parts[2], 'name', 'divideFn', 'workerFn', 'conquerFn', cb);
+            }
+            else if (parts[1] === 'all') {
+                return pers.getJobKinds(cb);
+            }
+        }
+        else if (op === 'job') {
+            if (parts[1] === 'new') {
+                return pers.createNewJob('jobKindId', 'cfg', cb);
+            }
+            else if (parts[1] === 'an_active') {
+                return pers.getAnActiveJob(cb);
+            }
+            else if (parts[1] === 'results') {
+                return pers.getJobResults(parts[2], cb);
+            }
+            else if (parts[1] === 'all') {
+                return pers.getJobs(cb);
+            }
         }
     } catch (ex) {
         throw ex;
