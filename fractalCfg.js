@@ -1,5 +1,4 @@
 {
-    jobId:       123,            // just for reference back to the server
     useCanvas:   'image/jpeg',   // if set, instantiates a hidden canvas and returns its imageData as id key. uses compression defined as value (image/jpeg or image/png)
     d:           [256*3, 256*2], // image size in px
     tl:          {r:-2, i: 1},   // top left fractal pos

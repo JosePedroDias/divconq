@@ -70,6 +70,10 @@
             <h2>create kind</h2>
 
 
+            <label for="name">name</label>
+            <input id="name" autocomplete="off" spellcheck="false" value="">
+
+
             <label for="divide">divide fn</label>
 <pre>var divideWork = function(cfg, index) {</pre>
             <textarea id="divide" autocomplete="off" spellcheck="false">
@@ -96,7 +100,7 @@
             <button>create new kind</button>
         </div>
 
-        <div id="create-job" class="hidden">
+        <div id="create-job" class="xhidden">
             <h2>create work</h2>
 
             <label for="kind">kind</label>
@@ -123,9 +127,94 @@
 
             <li><a href="/part/1/1/1"    >getPart 1,1,1      </a></li>
 
-            <lix><a href="/answer/1/1/1"  >setAnswer 1,1,1    </a></lix>
+            <li><a href="/answer/1/1/1"  >setAnswer 1,1,1    </a></li>
 
             <li><a href="/result/1/1"    >getResult 1,1      </a></li>
         </ul>
+
+        <script type="text/javascript">
+            var QS = function(sel) {
+                return document.querySelector(sel);
+            };
+
+            var ajax = function(uri, cb) {
+                var xhr = new XMLHttpRequest();
+                xhr.open('GET', uri, true);
+                var cbInner = function() {
+                    if (xhr.readyState === 4 && xhr.status === 200) {
+                        return cb(null, JSON.parse(xhr.response));
+                    }
+                    cb('error requesting ' + uri);
+                };
+                xhr.onload  = cbInner;
+                xhr.onerror = cbInner;
+                xhr.send(null);
+            };
+
+            var ajaxForm = function(uri, fields, cb) {
+                var xhr = new XMLHttpRequest();
+                xhr.open('POST', uri, true);
+                var cbInner = function() {
+                    if (xhr.readyState === 4 && xhr.status === 200) {
+                        return cb(null, JSON.parse(xhr.response));
+                    }
+                    cb('error requesting ' + uri);
+                };
+                xhr.onload  = cbInner;
+                xhr.onerror = cbInner;
+
+                var fd = new FormData();
+                for (k in fields) {
+                    fd.append(k, fields[k]);
+                }
+                xhr.send(fd);
+            };
+
+            QS('#create-kind button').addEventListener('click', function(ev) {
+                ajaxForm(
+                    '/kind/new',
+                    {
+                        name:      QS('#name'   ).value,
+                        divideFn:  QS('#divide' ).value,
+                        worker:    QS('#worker' ).value,
+                        conquerFn: QS('#conquer').value
+                    },
+                    function(err, res) {
+                        if (err || res.error) { return alert(err || res.error); }
+                        
+                        console.log(err, res.result);
+                    }
+                );
+            });
+
+            QS('#create-job button').addEventListener('click', function(ev) {
+                var kId = QS('#kind').value;
+                ajaxForm(
+                    '/job/' + kId + '/new',
+                    {
+                        cfg: QS('#cfg').value
+                    },
+                    function(err, res) {
+                        if (err || res.error) { return alert(err || res.error); }
+                        
+                        console.log(err, res.result);
+                    }
+                );
+            });
+
+            ajax('/kind/all', function(err, res) {
+                if (err || res.error) { return alert(err || res.error); }
+                
+                var kinds = res.result;
+                console.log(err, kinds);
+                var kindEl = QS('#kind');
+                kinds.forEach(function(k) {
+                    var optEl = document.createElement('option');
+                    optEl.appendChild( document.createTextNode(k.name) );
+                    optEl.setAttribute('value', k.id);
+                    kindEl.appendChild(optEl);
+                });
+            });
+        </script>
     </body>
 </html>

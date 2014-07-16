@@ -12,7 +12,8 @@
     "canvas": "~1.1.5",
     "level-sublevel": "^5.2.0",
     "leveldown": "^0.10.2",
-    "levelup": "^0.18.5"
+    "levelup": "^0.18.5",
+    "formidable": "~1.0.15"
   },
   "repository": {
     "type": "git",

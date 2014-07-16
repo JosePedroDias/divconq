@@ -7,10 +7,6 @@ var sublevel = require('level-sublevel');
 
 var DB = sublevel( levelup('divconq.db') );
 
-/*
-jobKind
-
-*/
 
 
 var ids     = DB.sublevel('id');
@@ -117,7 +113,13 @@ var persistence = function() {
             kinds.createReadStream({
                 keys:   false
             })
-            .on('data',  function(o) {   res.push( JSON.parse(o) ); })
+            .on('data',  function(o) {
+                o = JSON.parse(o);
+                res.push({
+                    id:   o.id,
+                    name: o.name
+                });
+            })
             .on('end',   function() {    cb(null, res);             })
             .on('error', function(err) { cb(err);                   })
             .on('close', function() {    cb('closed!');             });
@@ -138,7 +140,7 @@ var persistence = function() {
 
                 var kjId = [kId, jId].join('_');
 
-                cfg = JSON.parse(cfg);
+                //cfg = JSON.parse(cfg);
 
                 var o = {
                     id:  jId,
@@ -171,8 +173,8 @@ var persistence = function() {
 
         getAnActiveJob: function(cb) { // returns {divideFn, worker, conquerFn, jobId} // job/an_active
             log('getAnActiveJob', []);
-            // TODO STORE
-            setImmediate(function() { cb(null, {divideFn:'d', worker:'w', conquerFn:'w', jobId:'j1'}); });
+            
+            cb('TODO');
         },
 
         getJobs: function(cb) { // job/all
@@ -182,7 +184,35 @@ var persistence = function() {
             jobs.createReadStream({
                 keys:   false
             })
-            .on('data',  function(o) {   res.push( JSON.parse(o) ); })
+            .on('data', function(o) {
+                o = JSON.parse(o);
+                res.push({
+                    kId: o.kId,
+                    id:  o.id
+                });
+            })
+            .on('end',   function() {    cb(null, res);             })
+            .on('error', function(err) { cb(err);                   })
+            .on('close', function() {    cb('closed!');             });
+        },
+
+        getActiveJobs: function(cb) { // job/all
+            log('getJobs', []);
+
+            var res = [];
+            jobs.createReadStream({
+                keys:   false
+            })
+            .on('data', function(o) {
+                o = JSON.parse(o);
+                if (!o.active) { return; }
+                res.push({
+                    kId:        o.kId,
+                    id:         o.id,
+                    totalParts: o.totalParts,
+                    partsLeft:  o.partsLeft
+                });
+            })
             .on('end',   function() {    cb(null, res);             })
             .on('error', function(err) { cb(err);                   })
             .on('close', function() {    cb('closed!');             });
@@ -190,6 +220,25 @@ var persistence = function() {
 
 
         ////
+
+
+        createPart: function(kId, jId, index, part, cb) {
+            log('createPart', [kId, jId, index, part]);
+
+            var i = part.indexOf('{') + 1;
+            part = [
+                part.substring(0, i),
+                '"kId":',   kId, ',',
+                '"jId":',   jId, ',',
+                '"index":', index, ',',
+                part.substring(i)
+            ].join('');
+            console.log(part);
+
+            var kji = [kId, jId, index].join('_');
+
+            parts.put(kji, part, cb);
+        },
 
 
         getPart: function(kId, jId, index, cb) { // job/<kId>
@@ -200,7 +249,7 @@ var persistence = function() {
             parts.get(kji, function(err, part) {
                 if (err) { return cb(err); }
 
-                part = JSON.parse(part);
+                //part = JSON.parse(part);
 
                 cb(null, part);
             });
@@ -210,12 +259,26 @@ var persistence = function() {
         ////
 
 
-        setAnswer: function(kId, jId, index, answer, cb) { // job/<kId>
-            log('setAnswer', [kId, jId, index]);
+        createAnswer: function(kId, jId, index, answer, cb) {
+            log('createAnswer', [kId, jId, index, answer]);
 
             var kji = [kId, jId, index].join('_');
 
-            answers.put(kji, answer, cb);
+            answers.put(kji, cb);
+        },
+
+        getAnswer: function(kId, jId, index, cb) {
+            log('getAnswer', [kId, jId, index]);
+
+            var kji = [kId, jId, index].join('_');
+
+            answers.get(kji, function(err, part) {
+                if (err) { return cb(err); }
+
+                //part = JSON.parse(part);
+
+                cb(null, part);
+            });
         },
 
 

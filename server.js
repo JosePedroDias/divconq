@@ -1,8 +1,13 @@
-var fs     = require('fs');
-var http   = require('http');
-var os     = require('os');
-var vm     = require('vm');
-var Canvas = require('canvas'); // sudo apt-get install libgif-dev libjpeg-dev libcairo2-dev
+'use script';
+
+
+
+var fs         = require('fs');
+var http       = require('http');
+var os         = require('os');
+var vm         = require('vm');
+var formidable = require('formidable');
+var Canvas     = require('canvas'); // sudo apt-get install libgif-dev libjpeg-dev libcairo2-dev
 
 // var pers = require('./persistenceFake')();
 var pers = require('./persistenceLevel')();
@@ -69,7 +74,6 @@ var srv = http.createServer(function(req, res) {
     var cb, body;
     if (op === 'kind' || op === 'job' || op === 'result') {
         cb = function(err, result) {
-            //console.log('CB CALLED WITH ', err, result);
             var o = err ? {status:'error', error:err.toString()} : {status:'ok'};
             if (!err && result) {
                 o.result = result;
@@ -193,10 +197,22 @@ var srv = http.createServer(function(req, res) {
         }
         else if (op === 'kind') {
             if (parts[1] === 'new') {
-                return pers.createKind('name', 'divideFn', 'worker', 'conquerFn', cb);
+                var form = new formidable.IncomingForm();
+                form.parse(req, function(err, fields, files) {
+                    if (err) { return cb(err); }
+
+                    pers.createKind(fields.name, fields.divideFn, fields.worker, fields.conquerFn, cb);
+                });
+                return;
             }
             else if (parts[1] === 'update') {
-                return pers.updateKind(parts[2], 'name2', 'divideFn2', 'worker2', 'conquerFn2', cb);
+                var form = new formidable.IncomingForm();
+                form.parse(req, function(err, fields, files) {
+                    if (err) { return cb(err); }
+
+                    pers.updateKind(parts[2], fields.name, fields.divideFn, fields.worker, fields.conquerFn, cb);
+                });
+                return;
             }
             else if (parts[1] === 'all') {
                 return pers.getKinds(cb);
@@ -205,11 +221,17 @@ var srv = http.createServer(function(req, res) {
         }
         else if (op === 'job') {
             if (parts[2] === 'new') {
-                return pers.createJob(parts[1], '{}', cb);
+                var form = new formidable.IncomingForm();
+                form.parse(req, function(err, fields, files) {
+                    if (err) { return cb(err); }
+
+                    pers.createJob(parts[1], fields.cfg, cb);
+                });
+                return;
             }
-            else if (parts[1] === 'an_active') {
+            /*else if (parts[1] === 'an_active') {
                 return pers.getAnActiveJob(cb);
-            }
+            }*/
             else if (parts[1] === 'all') {
                 return pers.getJobs(cb);
             }
@@ -229,6 +251,9 @@ var srv = http.createServer(function(req, res) {
         res.writeHead(500);
         return res.end([ex.toString(), ex.stacktrace()].join('\n'));
     }
+
+    // TODO TEMP
+    //return pers.createPart(1, 2, 3, '{"a":"b"}', cb);
 
     res.writeHead(404);
     res.end('unsupported path: "' + req.url + '"');

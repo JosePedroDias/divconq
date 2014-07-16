@@ -14,7 +14,6 @@
             br:        {r: cfg.tl.r + (ir+1)*dr, i: cfg.tl.i + (ii+1)*di},
             iter:      cfg.iter,
             useCanvas: cfg.useCanvas,
-            index:     i,   // for joining the work back
             ir:        ir,
             ii:        ii
         };
