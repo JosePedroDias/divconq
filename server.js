@@ -9,11 +9,7 @@ var vm         = require('vm');
 var formidable = require('formidable');
 var Canvas     = require('canvas'); // sudo apt-get install libgif-dev libjpeg-dev libcairo2-dev
 
-// var pers = require('./persistenceFake')();
 var pers = require('./persistenceLevel')();
-//var pers = require('./persistenceRedis')();
-
-//var redis = require('redis');
 
 
 

@@ -36,26 +36,67 @@
 
             button {
                 display: block;
+                clear: both;
             }
 
             textarea {
                 width:  100%;
                 height: 300px;
+            }
+
+            textarea, input {
                 border: 1px solid #AAA;
             }
 
             textarea:hover,
             textarea:focus {
-                background-color: #FFD;
+                background-color: #FFE;
+                -xwebkit-box-shadow: inset 0 0 4px 2px rgba(0, 0, 0, 0.33);
+                   -xmoz-box-shadow: inset 0 0 4px 2px rgba(0, 0, 0, 0.33);
+                        box-shadow: inset 0 0 4px 2px rgba(0, 0, 0, 0.33);
+            }
+
+            #worker {
+                border-left-width:  0;
+                border-right-width: 0;
             }
 
             pre {
                 color: #242;
                 margin: 0;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+
+            textarea, pre {
+                font-size: 11px;
             }
 
             .hidden {
                 display: none;
+            }
+
+            .col-33 {
+                float: left;
+                width: 33.3%;
+            }
+
+            ::-webkit-scrollbar {
+                width:  8px;
+                height: 8px;
+            }
+
+            ::-webkit-scrollbar-track {
+                border-radius: 4px;
+            }
+
+            ::-webkit-scrollbar-thumb {
+                border-radius: 4px;
+            }
+
+            textarea:hover::-webkit-scrollbar-thumb,
+            textarea:focus::-webkit-scrollbar-thumb {
+                background-color: rgba(0, 0, 0, 0.5);
             }
         </style>
     </head>
@@ -63,45 +104,56 @@
     <body>
         <div id="tabs">
             <span data-target="create-kind" class="selected">create kind</span>
-            <span data-target="">create job</span>
+            <span data-target="create-job">create job</span>
         </div>
 
-        <div id="create-kind">
+
+
+        <div id="create-kind" class="tab">
             <h2>create kind</h2>
 
 
             <label for="name">name</label>
             <input id="name" autocomplete="off" spellcheck="false" value="">
 
-
-            <label for="divide">divide fn</label>
+            <div class="wrapper">
+                <div class="col-33">
+                    <label for="divide">divide fn</label>
 <pre>var divideWork = function(cfg, index) {</pre>
-            <textarea id="divide" autocomplete="off" spellcheck="false">
+                    <textarea id="divide" autocomplete="off" spellcheck="false">
 {{DIVIDE}}
-            </textarea>
+                    </textarea>
 <pre>
     return cfgs;
 };</pre>
+                </div>
 
-
-            <label for="worker">worker</label>
-            <textarea id="worker" autocomplete="off" spellcheck="false">
+                <div class="col-33">
+                    <label for="worker">worker</label>
+<pre>&nbsp;</pre>
+                    <textarea id="worker" autocomplete="off" spellcheck="false">
 {{WORKER}}
-            </textarea>
+                    </textarea>
+<pre>&nbsp;</pre>
+                </div>
 
-
-            <label for="conquer">conquer fn</label>
+                <div class="col-33">
+                    <label for="conquer">conquer fn</label>
 <pre>var conquerWork = function(cfg, results) {</pre>
-            <textarea id="conquer" autocomplete="off" spellcheck="false">
+                    <textarea id="conquer" autocomplete="off" spellcheck="false">
 {{CONQUER}}
-            </textarea>
+                    </textarea>
 <pre>};</pre>
+                </div>
+            </div>
 
-            <button>create new kind</button>
+            <button>create</button>
         </div>
 
-        <div id="create-job" class="xhidden">
-            <h2>create work</h2>
+
+
+        <div id="create-job" class="hidden tab">
+            <h2>create job</h2>
 
             <label for="kind">kind</label>
             <select id="kind"></select>
@@ -111,30 +163,28 @@
 {{CFG}}
             </textarea>
 
-            <button>create new job</button>
+            <button>create</button>
         </div>
 
-        <ul class="hidden">
-            <li><a href="/kind/new"      >createKind         </a></li>
-            <li><a href="/kind/1"        >getKind 1          </a></li>
-            <li><a href="/kind/update/1" >updateKind 1       </a></li>
-            <li><a href="/kind/all"      >getKinds           </a></li>
-
-            <li><a href="/job/1/new"     >createJob of kind 1</a></li>
-            <li><a href="/job/1/1"       >getJob 1,1         </a></li>
-            <li><a href="/job/all"       >getJobs            </a></li>
-            <li><a href="/job/an_active" >getAnActiveJob     </a></li>
-
-            <li><a href="/part/1/1/1"    >getPart 1,1,1      </a></li>
-
-            <li><a href="/answer/1/1/1"  >setAnswer 1,1,1    </a></li>
-
-            <li><a href="/result/1/1"    >getResult 1,1      </a></li>
-        </ul>
 
         <script type="text/javascript">
-            var QS = function(sel) {
-                return document.querySelector(sel);
+            var listToArr = function(lst) {
+                var l = lst.length;
+                var arr = new Array(l); // optimizable *list-to-array
+                for (var i = 0; i < l; ++i) {
+                    arr[i] = lst[i];
+                }
+                return arr;
+            };
+
+            var QS = function(sel, el) {
+                if (!el) { el = document; }
+                return el.querySelector(sel);
+            };
+
+            var QSA = function(sel, el) {
+                if (!el) { el = document; }
+                return listToArr( el.querySelectorAll(sel) );
             };
 
             var ajax = function(uri, cb) {
@@ -182,13 +232,18 @@
                     function(err, res) {
                         if (err || res.error) { return alert(err || res.error); }
                         
-                        console.log(err, res.result);
+                        console.log('created kind with id ' + res.result);
+                        //console.log(err, res.result);
                     }
                 );
             });
 
             QS('#create-job button').addEventListener('click', function(ev) {
                 var kId = QS('#kind').value;
+                if (''+kId === '-1') {
+                    return alert('please choose a kind!');
+                }
+
                 ajaxForm(
                     '/job/' + kId + '/new',
                     {
@@ -197,23 +252,51 @@
                     function(err, res) {
                         if (err || res.error) { return alert(err || res.error); }
                         
-                        console.log(err, res.result);
+                        console.log('created job with kId ' + kId + ' and id ' + res.result);
+                        //console.log(err, res.result);
                     }
                 );
             });
 
-            ajax('/kind/all', function(err, res) {
-                if (err || res.error) { return alert(err || res.error); }
-                
-                var kinds = res.result;
-                console.log(err, kinds);
+            var updateKindSelect = function() {
                 var kindEl = QS('#kind');
-                kinds.forEach(function(k) {
-                    var optEl = document.createElement('option');
-                    optEl.appendChild( document.createTextNode(k.name) );
-                    optEl.setAttribute('value', k.id);
-                    kindEl.appendChild(optEl);
+
+                kindEl.innerHTML = '';
+
+                ajax('/kind/all', function(err, res) {
+                    if (err || res.error) { return alert(err || res.error); }
+                    
+                    var kinds = res.result;
+                    kinds.unshift({id:-1});
+
+                    kinds.forEach(function(k) {
+                        var optEl = document.createElement('option');
+                        optEl.appendChild( document.createTextNode(k.name || '') );
+                        optEl.setAttribute('value', k.id);
+                        kindEl.appendChild(optEl);
+                    });
                 });
+            };
+
+            QS('#tabs').addEventListener('click', function(ev) {
+                var tgtEl = ev.target;
+                var tgtId = tgtEl.getAttribute('data-target');
+
+                QSA('#tabs span').forEach(function(el) {
+                    var sel = (el === tgtEl);
+                    if (sel) { el.classList.add(   'selected'); }
+                    else {     el.classList.remove('selected'); }
+                });
+
+                QSA('.tab').forEach(function(el) {
+                    var sel = (el.id === tgtId);
+                    if (sel) { el.classList.remove('hidden'); }
+                    else {     el.classList.add(   'hidden'); }
+                });
+
+                if (tgtId === 'create-job') {
+                    updateKindSelect();
+                }
             });
         </script>
     </body>
