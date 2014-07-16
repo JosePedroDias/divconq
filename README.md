@@ -24,32 +24,33 @@ Besides, the input and output of the payloads should be somewhat small (CPU-boun
 
 ## process
 
-### 1. defining workKind
+### 1. defining kind (recipe)
 
-* client submits worker code
 * client submits divide function
-* client submits a conquer function
-* a workKind is defined
+* client submits worker code
+* client submits conquer function
+* a kind is defined
 
 
-### 2. work is submitted
+### 2. job is submitted (recipe applied to given problem)
 
-* client submits a problem (cfg)
-* a work is defined
-* system runs the divide function, generating a set of sub-problems treatable by webworkers (payloads)
+* client submits a cfg (problem)
+* a job is defined
+* system runs the divide function, generating a set of sub-problems treatable by webworkers (parts)
 
 
 ### 3. work processing
 
 * each contributer site hosting a divconq script is a potential worker
-* if an unfinished work exists, a payload and worker code is sent to the contributer
-* webworker is instanced, runs the payload and returns a workUnit
-* once all workUnits are available in the system, the system runs the conquer function
-* system notifies the client with the work result
+* if there are active jobs, fetches random cfg for webworker resolution. serves page will all this.
+* webworker is instanced, runs the part and returns an answer
+* once all answers are available in the system, the system runs the conquer function
+* system notifies the client with the result
 
 
 
 ## todo
 
-* store states
+* store states (ONGOING)
 * generic worker examples with and without canvas
+* support for instancing an iframe instead of webworker

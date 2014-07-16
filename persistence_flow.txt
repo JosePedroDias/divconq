@@ -8,24 +8,24 @@
 | Job |      +--+ Job +--+             
 +-----+      |  +-----+  |             
              |           |             
-             |           |      DIVIDE 
+             |           |      DIVIDE (server)
              |           |             
              |           |             
         +----+----+ +----+----+        
-        | JobPart | | JobPart |        
+        |  Part   | |  bPart  |        
         +-----+---+ +----+----+        
               |          |             
               |          |             
-              |          |      WORKER 
+              |          |      WORKER... (client)
               |          |             
               |          |             
-       +------+----+-----+-----+       
-       | JobAnswer | JobAnswer |       
-       +-----+-----+------+----+       
+         +----+---+  +---+----+       
+         | Answer |  | Answer |       
+         +---+----+  +--------+       
              |            |            
              |            |            
              |            |            
-             |            |     CONQUER
+             |            |     CONQUER (server)
              |            |            
              | +--------+ |            
              +-+ Result +-+            
