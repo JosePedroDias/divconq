@@ -55,15 +55,19 @@ var files = {
 
 
 var prepareJob = function(kind, cfg) {
-    var cfg2, tpl;
     var sandbox = {};
-    vm.runInNewContext(
+    //vm.runInNewContext(
+    console.log(
         [
-            'var cfg = ', cfg, ';',
-            kind.divideFn, ';',
+            'var cfg = ', cfg, ';\n',
+            'var divideWork = function(cfg, index) {\n',
+            kind.divideFn, ';\n',
+            'return cfgs;\n',
+            '};\n',
             'var cfgs = divideWork(cfg);'
-        ].join(''),
-        sandbox
+        ].join('')
+    );
+        /*sandbox
     );
     
     var answerTo = [domain, 'answer'].join('/');
@@ -78,7 +82,7 @@ var prepareJob = function(kind, cfg) {
             c.answerTo = answerTo;
             c.kpiTo    = kpiTo;
         }),
-    };
+    };*/
 };
 
 
