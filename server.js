@@ -9,7 +9,9 @@ var vm         = require('vm');
 var formidable = require('formidable');
 var Canvas     = require('canvas'); // sudo apt-get install libgif-dev libjpeg-dev libcairo2-dev
 
-var pers = require('./persistenceLevel')();
+var pers   = require('./persistenceLevel')();
+var sample = require('./sampleKindAndJob');
+
 
 
 
@@ -52,6 +54,35 @@ var files = {
 
 
 
+var prepareJob = function(kind, cfg) {
+    var cfg2, tpl;
+    var sandbox = {};
+    vm.runInNewContext(
+        [
+            'var cfg = ', cfg, ';',
+            kind.divideFn, ';',
+            'var cfgs = divideWork(cfg);'
+        ].join(''),
+        sandbox
+    );
+    
+    var answerTo = [domain, 'answer'].join('/');
+    var kpiTo    = [domain, 'kpi'   ].join('/');
+
+    return {
+        tpl: expandTemplate(files.tpl, {
+            CORE:   files.core,
+            WORKER: kind.worker
+        }),
+        parts: sandbox.cfgs.forEach(function(c) {
+            c.answerTo = answerTo;
+            c.kpiTo    = kpiTo;
+        }),
+    };
+};
+
+
+
 var srv = http.createServer(function(req, res) {
 
     var parts = req.url.split('/');
@@ -64,8 +95,6 @@ var srv = http.createServer(function(req, res) {
         res.writeHead(404);
         return res.end();
     }
-
-    var workKind = 'fractal'; // TODO elect pending jobs, workKind and id
 
     var cb, body;
     if (op === 'kind' || op === 'job' || op === 'result') {
@@ -84,52 +113,20 @@ var srv = http.createServer(function(req, res) {
     }
 
     try {
-        var wkCfg         = loadFile(workKind + 'Cfg.js');
-        var wkDivideWork  = loadFile(workKind + 'DivideWork.js');
-        var wkWorker      = loadFile(workKind + 'Worker.js');
-        var wkConquerWork = loadFile(workKind + 'ConquerWork.js');
-        
         if (op === 'ask') {
-
-            // TODO if new job, divide it and save parts
-            var cfg2;
-            if (1) {
-                var sandbox = {};
-                vm.runInNewContext(
-                    [
-                        'var cfg = ', wkCfg, ';',
-                        wkDivideWork, ';',
-                        'var cfgs = divideWork(cfg);'
-                    ].join(''),
-                    sandbox
-                );
-                var cfgs = sandbox.cfgs;
-                //console.log(cfgs);
-                cfg2 = cfgs[0];
-
-                cfg2.answerTo = [domain, 'answer'].join('/');
-                cfg2.kpiTo    = [domain, 'kpi'].join('/');
-            }
-            else {
-                // TODO else, fetch path
-            }
-
-            // TODO update jobs state
-
-            body = expandTemplate(files.tpl, {
-                CORE:   files.core,
-                WORKER: wkWorker,
-                CFG:    JSON.stringify(cfg2)
+            pers.getAnActive(function(err, body) {
+                res.writeHead(200, {
+                    'Content-Type':   'text/javascript; charset=utf-8',
+                    'Content-Length': body.length
+                });
+                return res.end(body);
             });
-
-            res.writeHead(200, {
-                'Content-Type':   'text/javascript; charset=utf-8',
-                'Content-Length': body.length
-            });
-            return res.end(body);
+            return;
         }
         else if (op === 'answer') {
-            var parts2 = [];
+            return cb('TODO');
+
+            /*var parts2 = [];
             req.on('data', function(data) {
                 parts2.push(data);
             });
@@ -155,7 +152,7 @@ var srv = http.createServer(function(req, res) {
                 'Content-Type':                'application/json; charset=utf-8',
                 'Content-Length':              body.length
             });
-            return res.end(body);
+            return res.end(body);*/
         }
         else if (op === 'kpi') {
             console.log('KPI:');
@@ -174,15 +171,16 @@ var srv = http.createServer(function(req, res) {
             res.end();
 
             // TODO save data?
+            return cb('TODO SAVE KPI DATA')            
         }
         else if (op === 'manage') {
             body = files.manage;
 
             body = expandTemplate(body, {
-                DIVIDE:  wkDivideWork,
-                WORKER:  wkWorker,
-                CONQUER: wkConquerWork,
-                CFG:     wkCfg
+                DIVIDE:  sample.kind.divideFn,
+                WORKER:  sample.kind.worker,
+                CONQUER: sample.kind.conquerFn,
+                CFG:     sample.cfg
             });
 
             res.writeHead(200, {
@@ -221,13 +219,42 @@ var srv = http.createServer(function(req, res) {
                 form.parse(req, function(err, fields, files) {
                     if (err) { return cb(err); }
 
-                    pers.createJob(parts[1], fields.cfg, cb);
+                    var kId = parts[1];
+
+                    console.log('1. received job');
+
+                    pers.createJob(kId, fields.cfg, function(err, jId) {
+                        if (err) { return cb(err); }
+
+                        console.log('2. saved job');
+
+                        pers.getKind(kId, function(err, kind) {
+                            if (err) { return cb(err); }
+
+                            console.log('3. fetched kind');
+
+                            var exp = prepareJob(kind, fields.cfg);
+
+                            console.log('4. divided job cfg');
+
+                            pers.createActive(kId, jId, exp.tpl, exp.parts.length, function(err) {
+                                if (err) { return cb(err); }
+
+                                console.log('5. saved tpl and parts status');
+
+                                pers.createParts(kId, jId, exp.parts, function(err) {
+                                    if (err) { return cb(err); }
+
+                                    console.log('6. saved parts. Job is ongoing!');
+
+                                    cb(null, jId);
+                                });
+                            });
+                        });
+                    });
                 });
                 return;
             }
-            /*else if (parts[1] === 'an_active') {
-                return pers.getAnActiveJob(cb);
-            }*/
             else if (parts[1] === 'all') {
                 return pers.getJobs(cb);
             }
