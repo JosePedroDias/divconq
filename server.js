@@ -56,33 +56,42 @@ var files = {
 
 var prepareJob = function(kind, cfg) {
     var sandbox = {};
-    //vm.runInNewContext(
-    console.log(
+    vm.runInNewContext(
+    //console.log(
         [
-            'var cfg = ', cfg, ';\n',
+            'var cfg = ', cfg.trim(), ';\n',
             'var divideWork = function(cfg, index) {\n',
-            kind.divideFn, ';\n',
+            kind.divideFn.trim(), ';\n',
             'return cfgs;\n',
             '};\n',
             'var cfgs = divideWork(cfg);'
-        ].join('')
-    );
-        /*sandbox
+        ].join(''),
+    //);
+        sandbox
     );
     
     var answerTo = [domain, 'answer'].join('/');
     var kpiTo    = [domain, 'kpi'   ].join('/');
 
+    var tpl = expandTemplate(files.tpl, {
+        CORE:   files.core,
+        WORKER: kind.worker
+    });
+
+    var parts = sandbox.cfgs;
+    parts.forEach(function(c) {
+        c.answerTo = answerTo;
+        c.kpiTo    = kpiTo;
+    });
+
+    parts = parts.map(function(p) {
+        return JSON.stringify(p);
+    });
+
     return {
-        tpl: expandTemplate(files.tpl, {
-            CORE:   files.core,
-            WORKER: kind.worker
-        }),
-        parts: sandbox.cfgs.forEach(function(c) {
-            c.answerTo = answerTo;
-            c.kpiTo    = kpiTo;
-        }),
-    };*/
+        tpl:   tpl,
+        parts: parts
+    };
 };
 
 
@@ -128,7 +137,7 @@ var srv = http.createServer(function(req, res) {
             return;
         }
         else if (op === 'answer') {
-            return cb('TODO');
+            throw 'TODO';
 
             /*var parts2 = [];
             req.on('data', function(data) {
@@ -249,9 +258,15 @@ var srv = http.createServer(function(req, res) {
                                 pers.createParts(kId, jId, exp.parts, function(err) {
                                     if (err) { return cb(err); }
 
-                                    console.log('6. saved parts. Job is ongoing!');
+                                    console.log('6. saved parts');
 
-                                    cb(null, jId);
+                                    pers.updateActivePool('add', kId, jId, function(err) {
+                                        if (err) { return cb(err); }
+
+                                        console.log('7.updated active pool. Job is ongoing!');
+
+                                        cb(null, jId);
+                                    });
                                 });
                             });
                         });
@@ -274,9 +289,9 @@ var srv = http.createServer(function(req, res) {
             return pers.getResult(parts[1], parts[2], cb);
         }
     } catch (ex) {
-        //throw ex;
-        res.writeHead(500);
-        return res.end([ex.toString(), ex.stacktrace()].join('\n'));
+        throw ex;
+        /*res.writeHead(500);
+        return res.end([ex.toString(), ex.stacktrace()].join('\n'));*/
     }
 
     // TODO TEMP

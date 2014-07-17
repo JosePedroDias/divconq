@@ -190,7 +190,7 @@ var persistence = function() {
         ////
 
 
-        createActive: function(kId, jId, tpl, numParts) {
+        createActive: function(kId, jId, tpl, numParts, cb) {
             log('createActive', [kId, jId, tpl, numParts]);
 
             var kjId = [kId, jId].join('_');
@@ -212,7 +212,6 @@ var persistence = function() {
         getAnActive: function(cb) { // /ask (GET)
             log('getAnActive', []);
 
-            var that = this;
             this.getActivePool(function(err, ap) {
                 if (err) { return cb(err); }
 
@@ -249,8 +248,10 @@ var persistence = function() {
         ////
 
 
-        updateActivePool: function(op, kjId, cb) {
-            log('updateActivePool', [op, kjId]);
+        updateActivePool: function(op, kId, jId, cb) {
+            log('updateActivePool', [op, kId, jId]);
+
+            var kjId = [kId, jId].join('_');
 
             activePools.get('singleton', function(err, ap) {
                 if (err) {
@@ -295,13 +296,13 @@ var persistence = function() {
         ////
 
 
-        createParts: function(kId, jId, parts, cb) {
-            log('createParts', [kId, jId, parts]);
+        createParts: function(kId, jId, prts, cb) {
+            log('createParts', [kId, jId, prts]);
 
-            var batch = parts.map(function(p, index) {
+            var batch = prts.map(function(p, index) {
                 return {
                     key:   [kId, jId, index].join('_'),
-                    value: JSON.stringify(p),
+                    value: p,
                     type:  'put'
                 };
             });
