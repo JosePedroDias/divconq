@@ -129,6 +129,10 @@ var srv = http.createServer(function(req, res) {
     try {
         if (op === 'ask') {
             pers.getAnActive(function(err, body) {
+                if (err) {
+                    body = '';
+                }
+
                 res.writeHead(200, {
                     'Content-Type':   'text/javascript; charset=utf-8',
                     'Content-Length': body.length

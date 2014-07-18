@@ -417,8 +417,8 @@ var persistence = function() {
             })
             .on('data',  function(a) {   res.push(a);             })
             .on('end',   function() {    cb(null, res.join(',')); })
-            .on('error', function(err) { cb(err);                 })
-            .on('close', function() {    cb('closed!');           });
+            .on('error', function(err) { cb(err);                 });
+            //.on('close', function() {    cb('closed!');           });
         },
 
 
