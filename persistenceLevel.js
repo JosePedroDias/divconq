@@ -4,6 +4,7 @@
 
 var levelup  = require('levelup');
 var sublevel = require('level-sublevel');
+var csl      = require('./csl');
 
 var DB = sublevel( levelup('divconq.db') );
 
@@ -30,7 +31,7 @@ var zeroFill = function(n, digits) {
     return new Array(digits - n.length + 1).join('0') + n;
 };
 
-var ANSWER_DIGITS = 5
+var ANSWER_DIGITS = 5;
 
 
 
@@ -67,6 +68,10 @@ var log = function(name, args) {
         r.pop();
     }
     r.push(')');
+    
+    r.unshift(csl.red[0]);
+    r.push(   csl.red[1]);
+
     console.log( r.join('') );
 };
 
@@ -425,11 +430,10 @@ var persistence = function() {
 
             var kjId = [kId, jId].join('_');
 
-            results.put(kjId, JSON.stringify(result), function(err) {
+            results.put(kjId, result, function(err) {
                 console.log('saved', err);
                 cb(null);
             });
-            //results.put(kjId, 'X', cb);
         },
 
         getResult: function(kId, jId, cb) { // returns {status, result} // /result/<jId>

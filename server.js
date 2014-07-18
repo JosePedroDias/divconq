@@ -9,6 +9,7 @@ var vm         = require('vm');
 var formidable = require('formidable');
 var Canvas     = require('canvas'); // sudo apt-get install libgif-dev libjpeg-dev libcairo2-dev
 
+var csl    = require('./csl');
 var pers   = require('./persistenceLevel')();
 var sample = require('./sampleKindAndJob');
 
@@ -102,14 +103,14 @@ var srv = http.createServer(function(req, res) {
     parts.shift();
 
     var op = parts[0];
-    //console.log( parts );
+    console.log([ csl.green[0], '\n\n-> [', parts.join(','), ']', csl.green[1] ].join(''));
 
     if (op === 'favicon.ico') {
         res.writeHead(404);
         return res.end();
     }
 
-    var cb, body;
+    var cb, body, form;
     if (op === 'kind' || op === 'job' || op === 'result') {
         cb = function(err, result) {
             var o = err ? {status:'error', error:err.toString()} : {status:'ok'};
@@ -185,7 +186,7 @@ var srv = http.createServer(function(req, res) {
                                     console.log('4. job gathered');
 
                                     pers.getAnswers(kId, jId, function(err, answers) {
-                                        if (err) { throw err; }
+                                        if (err) { console.log(err); throw err; }
 
                                         console.log('5. answers gathered');
 
@@ -243,7 +244,7 @@ var srv = http.createServer(function(req, res) {
             res.end();
 
             // TODO save data?
-            return cb('TODO SAVE KPI DATA')            
+            return cb('TODO SAVE KPI DATA');
         }
         else if (op === 'manage') {
             body = files.manage;
@@ -263,8 +264,8 @@ var srv = http.createServer(function(req, res) {
         }
         else if (op === 'kind') {
             if (parts[1] === 'new') {
-                var form = new formidable.IncomingForm();
-                form.parse(req, function(err, fields, files) {
+                form = new formidable.IncomingForm();
+                form.parse(req, function(err, fields/*, files*/) {
                     if (err) { return cb(err); }
 
                     pers.createKind(fields.name, fields.divideFn, fields.worker, fields.conquerFn, cb);
@@ -272,8 +273,8 @@ var srv = http.createServer(function(req, res) {
                 return;
             }
             else if (parts[1] === 'update') {
-                var form = new formidable.IncomingForm();
-                form.parse(req, function(err, fields, files) {
+                form = new formidable.IncomingForm();
+                form.parse(req, function(err, fields/*, files*/) {
                     if (err) { return cb(err); }
 
                     pers.updateKind(parts[2], fields.name, fields.divideFn, fields.worker, fields.conquerFn, cb);
@@ -287,8 +288,8 @@ var srv = http.createServer(function(req, res) {
         }
         else if (op === 'job') {
             if (parts[2] === 'new') {
-                var form = new formidable.IncomingForm();
-                form.parse(req, function(err, fields, files) {
+                form = new formidable.IncomingForm();
+                form.parse(req, function(err, fields/*, files*/) {
                     if (err) { return cb(err); }
 
                     var kId = parts[1];
@@ -341,9 +342,6 @@ var srv = http.createServer(function(req, res) {
         else if (op === 'part') {
             return pers.getPart(parts[1], parts[2], parts[3], cb);
         }
-        /*else if (op === 'answer') {
-            return pers.setAnswer(parts[1], parts[2], parts[3], cb);
-        }*/
         else if (op === 'result') {
             return pers.getResult(parts[1], parts[2], cb);
         }
@@ -352,9 +350,6 @@ var srv = http.createServer(function(req, res) {
         res.writeHead(500);
         return res.end([ex.toString()/*, ex.stacktrace()*/].join('\n'));
     }
-
-    // TODO TEMP
-    //return pers.createPart(1, 2, 3, '{"a":"b"}', cb);
 
     res.writeHead(404);
     res.end('unsupported path: "' + req.url + '"');
