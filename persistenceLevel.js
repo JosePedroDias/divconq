@@ -25,6 +25,13 @@ var randInArr = function(arr) {
     return arr[ ~~(Math.random() * l) ];
 };
 
+var zeroFill = function(n, digits) {
+    if (typeof n !== 'string') { n = '' + n; }
+    return new Array(digits - n.length + 1).join('0') + n;
+};
+
+var ANSWER_DIGITS = 5
+
 
 
 var getNextId = function(name, cb) {
@@ -164,9 +171,7 @@ var persistence = function() {
                 o = JSON.stringify(o);
 
                 jobs.put(kjId, o, function(err) {
-                    if (err) { return cb(err); }
-
-                    cb(null, jId);
+                    cb(err, jId);
                 });
             });
         },
@@ -207,6 +212,51 @@ var persistence = function() {
             o = JSON.stringify(o);
 
             actives.put(kjId, o, cb);
+        },
+
+        getActive: function(kId, jId, cb) {
+            log('getActive', [kId, jId]);
+
+            var kjId = [kId, jId].join('_');
+
+            actives.get(kjId, function(err, active) {
+                if (err) { return cb(err); }
+
+                cb(null, JSON.parse(active));
+            });
+        },
+
+        updateActive: function(kId, jId, index, cb) {
+            log('updateActive', [kId, jId, index]);
+
+            index = parseInt(index, 10);
+
+            this.getActive(kId, jId, function(err, active) {
+                if (err) { return cb(err); }
+
+                //console.log(active.remainingParts);
+
+                var i = active.remainingParts.indexOf(index);
+
+                if (i === -1) {
+                    return cb('index not found');
+                }
+
+                active.remainingParts.splice(i, 1);
+
+                var l = active.remainingParts.length;
+
+                var cb2 = function(err) {
+                    cb(err, l);
+                };
+
+                var kjId = [kId, jId].join('_');
+
+                if (l === 0) {
+                    return actives.del(kjId, cb2);
+                }
+                actives.put(kjId, JSON.stringify(active), cb2);
+            });
         },
 
         getAnActive: function(cb) { // /ask (GET)
@@ -332,15 +382,15 @@ var persistence = function() {
         createAnswer: function(kId, jId, index, answer, cb) {
             log('createAnswer', [kId, jId, index, answer]);
 
-            var kji = [kId, jId, index].join('_');
+            var kji = [kId, jId, zeroFill(index, ANSWER_DIGITS)].join('_');
 
-            answers.put(kji, cb);
+            answers.put(kji, answer, cb);
         },
 
         getAnswer: function(kId, jId, index, cb) {
             log('getAnswer', [kId, jId, index]);
 
-            var kji = [kId, jId, index].join('_');
+            var kji = [kId, jId, zeroFill(index, ANSWER_DIGITS)].join('_');
 
             answers.get(kji, function(err, part) {
                 if (err) { return cb(err); }
@@ -351,9 +401,36 @@ var persistence = function() {
             });
         },
 
+        getAnswers: function(kId, jId, cb) {
+            log('getAnswers', [kId, jId]);
+            
+            var res = [];
+            answers.createReadStream({
+                keys:   false,
+                start:  [kId, jId        ].join('_'),
+                end:    [kId, jId, '\xff'].join('_')
+            })
+            .on('data',  function(a) {   res.push(a);             })
+            .on('end',   function() {    cb(null, res.join(',')); })
+            .on('error', function(err) { cb(err);                 })
+            .on('close', function() {    cb('closed!');           });
+        },
+
 
         ////
 
+
+        createResult: function(kId, jId, result, cb) {
+            log('createResult', [kId, jId, result]);
+
+            var kjId = [kId, jId].join('_');
+
+            results.put(kjId, JSON.stringify(result), function(err) {
+                console.log('saved', err);
+                cb(null);
+            });
+            //results.put(kjId, 'X', cb);
+        },
 
         getResult: function(kId, jId, cb) { // returns {status, result} // /result/<jId>
             log('getResult', [kId, jId]);

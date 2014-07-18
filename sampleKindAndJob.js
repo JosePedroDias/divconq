@@ -132,16 +132,20 @@ var conquerFn = function() {/*
         ctx.drawImage(smallImg, res.ir*w, res.ii*h, w, h);    
     }
  
-    var buf = canvasEl.toBuffer();
-    fs.writeFileSync(cfg.jobId + '.png', buf);
+	var b64Result = canvasEl.toDataURL( cfg.useCanvas );
 
-    console.log('done #' + results[0].index);
+	return b64Result;
+
+    //var buf = canvasEl.toBuffer();
+    //fs.writeFileSync(cfg.jobId + '.png', buf);
+
+    //console.log('done #' + results[0].index);
 */};
 
 var cfg = function() {/*
 {
     jobId:       123,            // just for reference back to the server
-    useCanvas:   'image/jpeg',   // if set, instantiates a hidden canvas and returns its imageData as id key. uses compression defined as value (image/jpeg or image/png)
+    useCanvas:   'image/png' ,   // if set, instantiates a hidden canvas and returns its imageData as id key. uses compression defined as value (image/jpeg or image/png)
     d:           [256*3, 256*2], // image size in px
     tl:          {r:-2, i: 1},   // top left fractal pos
     br:          {r: 1, i:-1},   // bottom right fractal pos

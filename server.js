@@ -54,7 +54,7 @@ var files = {
 
 
 
-var prepareJob = function(kind, cfg) {
+var prepareJob = function(kId, jId, kind, cfg) {
     var sandbox = {};
     vm.runInNewContext(
     //console.log(
@@ -70,8 +70,8 @@ var prepareJob = function(kind, cfg) {
         sandbox
     );
     
-    var answerTo = [domain, 'answer'].join('/');
-    var kpiTo    = [domain, 'kpi'   ].join('/');
+    var answerTo = [domain, 'answer', kId, jId].join('/');
+    var kpiTo    = [domain, 'kpi',    kId, jId].join('/');
 
     var tpl = expandTemplate(files.tpl, {
         CORE:   files.core,
@@ -79,9 +79,9 @@ var prepareJob = function(kind, cfg) {
     });
 
     var parts = sandbox.cfgs;
-    parts.forEach(function(c) {
-        c.answerTo = answerTo;
-        c.kpiTo    = kpiTo;
+    parts.forEach(function(c, index) {
+        c.answerTo = answerTo + '/' + index;
+        c.kpiTo    = kpiTo    + '/' + index;
     });
 
     parts = parts.map(function(p) {
@@ -137,35 +137,94 @@ var srv = http.createServer(function(req, res) {
             return;
         }
         else if (op === 'answer') {
-            throw 'TODO';
-
-            /*var parts2 = [];
+            var parts2 = [];
             req.on('data', function(data) {
                 parts2.push(data);
             });
             req.on('end', function() {
-                var d = parts2.join('');
-                //var o = JSON.parse(d);
-                //console.log('received ' + d.length + ' bytes');
+                var answer = parts2.join('');
+                console.log('0. received ' + answer.length + ' bytes');
 
-                // TODO save result
+                var kId = parts[1];
+                var jId = parts[2];
+                var index = parts[3];
 
-                if (1) { // if all results came, conquer
-                    vm.runInNewContext(
-                        [wkConquerWork, ';conquerWork(', wkCfg, ', [', d,']);'].join(''),
-                        {console:console, fs:fs, Canvas:Canvas, Image:Canvas.Image}
-                    );   
+                pers.createAnswer(kId, jId, index, answer, function(err) {
+                    if (err) { throw err; }
 
-                    // TODO update job state to finished 
-                }
+                    console.log('1. answer saved');
+
+                    pers.updateActive(kId, jId, index, function(err, nrPartsLeft) {
+                        if (err) { throw err; }
+
+                        if (nrPartsLeft > 0) {
+                            console.log('2. actived updated - parts left to answer: ' + nrPartsLeft);
+                            
+                            var body = '{"status":"ok"}';
+                            res.writeHead(200, {
+                                'Access-Control-Allow-Origin': '*',
+                                'Content-Type':                'application/json; charset=utf-8',
+                                'Content-Length':              body.length
+                            });
+                            return res.end(body);
+                        }
+
+                        pers.updateActivePool('remove', kId, jId, function(err) {
+                            if (err) { throw err; }
+
+                            console.log('2. active removed - all job answer gathered, pool updated');
+
+                            pers.getKind(kId, function(err, kind) {
+                                if (err) { throw err; }
+
+                                console.log('3. kind gathered');
+
+                                pers.getJob(kId, jId, function(err, job) {
+                                    if (err) { throw err; }
+
+                                    console.log('4. job gathered');
+
+                                    pers.getAnswers(kId, jId, function(err, answers) {
+                                        if (err) { throw err; }
+
+                                        console.log('5. answers gathered');
+
+                                        var sandbox = {
+                                            console: console,
+                                            fs:      fs,
+                                            Canvas:  Canvas,
+                                            Image:   Canvas.Image
+                                        };
+                                        //console.log(
+                                        vm.runInNewContext(
+                                            ['var conquerWork = function(cfg, results) {', kind.conquerFn, '}; var result = conquerWork(', job.cfg.trim(), ', [', answers, ']);'].join(''),
+                                            sandbox
+                                        );
+
+                                        console.log('6. answers conquered into result');
+
+                                        // TODO NOT WORKING
+                                        pers.createResult(kId, jId, sandbox.result, function(err) {
+                                            if (err) { throw err; }
+
+                                            console.log('7. result saved. all done for this job!');
+
+                                            var body = '{"status":"ok"}';
+                                            res.writeHead(200, {
+                                                'Access-Control-Allow-Origin': '*',
+                                                'Content-Type':                'application/json; charset=utf-8',
+                                                'Content-Length':              body.length
+                                            });
+                                            res.end(body);
+                                        });
+                                    });
+                                });
+                            });
+                        });
+                    });
+                });
             });
-            body = '{"status":"OK"}';
-            res.writeHead(200, {
-                'Access-Control-Allow-Origin': '*',
-                'Content-Type':                'application/json; charset=utf-8',
-                'Content-Length':              body.length
-            });
-            return res.end(body);*/
+            return;
         }
         else if (op === 'kpi') {
             console.log('KPI:');
@@ -246,7 +305,7 @@ var srv = http.createServer(function(req, res) {
 
                             console.log('3. fetched kind');
 
-                            var exp = prepareJob(kind, fields.cfg);
+                            var exp = prepareJob(kId, jId, kind, fields.cfg);
 
                             console.log('4. divided job cfg');
 
@@ -289,9 +348,9 @@ var srv = http.createServer(function(req, res) {
             return pers.getResult(parts[1], parts[2], cb);
         }
     } catch (ex) {
-        throw ex;
-        /*res.writeHead(500);
-        return res.end([ex.toString(), ex.stacktrace()].join('\n'));*/
+        //throw ex;
+        res.writeHead(500);
+        return res.end([ex.toString()/*, ex.stacktrace()*/].join('\n'));
     }
 
     // TODO TEMP
