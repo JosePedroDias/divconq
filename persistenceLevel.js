@@ -468,10 +468,8 @@ var persistence = function() {
             log('getResults', []);
             
             var res = [];
-            results.createReadStream({
-                keys:   false
-            })
-            .on('data',  function(a) {   res.push(a);   })
+            results.createReadStream({})
+            .on('data',  function(o) {   res.push({k:o.key, v:o.value}); })
             .on('end',   function() {    cb(null, res); })
             .on('error', function(err) { cb(err);       });
             //.on('close', function() {    cb('closed!');           });
