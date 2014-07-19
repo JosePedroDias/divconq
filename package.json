@@ -22,7 +22,7 @@
   "keywords": [
     "javascript",
     "browser",
-    "redis",
+    "leveldb",
     "map",
     "reduce",
     "distributed",

@@ -11,7 +11,7 @@ var Canvas     = require('canvas'); // sudo apt-get install libgif-dev libjpeg-d
 
 var csl    = require('./csl');
 var pers   = require('./persistenceLevel')();
-var sample = require('./sampleKindAndJob');
+var sample = require('./fractal'+'Sample');
 
 
 
@@ -111,7 +111,7 @@ var srv = http.createServer(function(req, res) {
     }
 
     var cb, body, form;
-    if (op === 'kind' || op === 'job' || op === 'result') {
+    if (op === 'kind' || op === 'job' || op === 'result' || op === 'active') {
         cb = function(err, result) {
             var o = err ? {status:'error', error:err.toString()} : {status:'ok'};
             if (!err && result) {
@@ -233,7 +233,8 @@ var srv = http.createServer(function(req, res) {
         }
         else if (op === 'kpi') {
             console.log('KPI:');
-            console.log('  data:      ' + decodeURIComponent(parts[1]) );
+            console.log('  kji:       ' + [parts[1], parts[2], parts[3]].join('/'));
+            console.log('  data:      ' + decodeURIComponent(parts[4]));
             console.log('  userAgent: ' + req.headers['user-agent']);
             console.log('  referer:   ' + req.headers.referer);
             console.log('  host:      ' + req.headers.host);
@@ -346,7 +347,13 @@ var srv = http.createServer(function(req, res) {
         else if (op === 'part') {
             return pers.getPart(parts[1], parts[2], parts[3], cb);
         }
+        else if (op === 'active') {
+            return pers.getActives(cb);
+        }
         else if (op === 'result') {
+            if (parts[1] === 'all') {
+                return pers.getResults(cb);
+            }
             return pers.getResult(parts[1], parts[2], cb);
         }
     } catch (ex) {

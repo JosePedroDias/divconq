@@ -105,6 +105,8 @@
         <div id="tabs">
             <span data-target="create-kind" class="selected">create kind</span>
             <span data-target="create-job">create job</span>
+            <span data-target="active-jobs">active jobs</span>
+            <span data-target="finished-jobs">finished jobs</span>
         </div>
 
 
@@ -114,7 +116,7 @@
 
 
             <label for="name">name</label>
-            <input id="name" autocomplete="off" spellcheck="false" value="">
+            <input id="name" autocomplete="off" spellcheck="false" value="" autofocus>
 
             <div class="wrapper">
                 <div class="col-33">
@@ -152,19 +154,32 @@
 
 
 
-        <div id="create-job" class="hidden tab">
+        <div id="create-job" class="tab hidden">
             <h2>create job</h2>
 
             <label for="kind">kind</label>
             <select id="kind"></select>
 
             <label for="cfg">cfg</label>
-            <textarea id="cfg">
+            <textarea id="cfg" autocomplete="off" spellcheck="false">
 {{CFG}}
             </textarea>
 
             <button>create</button>
         </div>
+
+
+
+        <div id="active-jobs" class="tab hidden">
+            <h2>active jobs</h2>
+        </div>
+
+
+
+        <div id="finished-jobs" class="tab hidden">
+            <h2>finished jobs</h2>
+        </div>
+
 
 
         <script type="text/javascript">
@@ -271,7 +286,7 @@
 
                     kinds.forEach(function(k) {
                         var optEl = document.createElement('option');
-                        optEl.appendChild( document.createTextNode(k.name || '') );
+                        optEl.appendChild( document.createTextNode((k.name || '') + ' (' + k.id + ')') );
                         optEl.setAttribute('value', k.id);
                         kindEl.appendChild(optEl);
                     });
@@ -294,10 +309,26 @@
                     else {     el.classList.add(   'hidden'); }
                 });
 
-                if (tgtId === 'create-job') {
-                    updateKindSelect();
-                }
+                if      (tgtId === 'create-job') {    updateKindSelect();   }
+                else if (tgtId === 'active-jobs') {   updateActiveJobs();   }
+                else if (tgtId === 'finished-jobs') { updateFinishedJobs(); }
             });
+
+            var updateActiveJobs = function() {
+                ajax('/active/all', function(err, res) {
+                    if (err || res.error) { return alert(err || res.error); }
+                    
+                    console.log(res);
+                });
+            };
+
+            var updateFinishedJobs = function() {
+                ajax('/result/all', function(err, res) {
+                    if (err || res.error) { return alert(err || res.error); }
+                    
+                    console.log(res);
+                });
+            };
         </script>
     </body>
 </html>

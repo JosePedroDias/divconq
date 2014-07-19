@@ -137,14 +137,13 @@ var conquerFn = function() {/*
 	return b64Result;
 
     //var buf = canvasEl.toBuffer();
-    //fs.writeFileSync(cfg.jobId + '.png', buf);
+    //fs.writeFileSync('TODO.png', buf);
 
     //console.log('done #' + results[0].index);
 */};
 
 var cfg = function() {/*
 {
-    jobId:       123,            // just for reference back to the server
     useCanvas:   'image/png' ,   // if set, instantiates a hidden canvas and returns its imageData as id key. uses compression defined as value (image/jpeg or image/png)
     d:           [256*3, 256*2], // image size in px
     tl:          {r:-2, i: 1},   // top left fractal pos

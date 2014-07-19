@@ -47,10 +47,3 @@ Besides, the input and output of the payloads should be somewhat small (CPU-boun
 * once all answers are available in the system, the system runs the conquer function
 * system notifies the client with the result
 
-
-
-## todo
-
-* store states (ONGOING)
-* generic worker examples with and without canvas
-* support for instancing an iframe instead of webworker

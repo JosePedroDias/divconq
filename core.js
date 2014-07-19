@@ -26,6 +26,41 @@ var createWorker = function(code) {
 
 
 
+var createIframe = function(code) {
+    code = [
+        '<!DOCTYPE html>\n',
+        '<html><head><meta charset="utf-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"></head><body>',
+        '<script type="text/javascript">', code, '</scr'+'ipt>',
+        '</body></html>'
+    ].join('');
+    var iframeEl = document.createElement('iframe');
+    var s = iframeEl.style;
+    s.border = 0;
+    iframeEl.setAttribute('frameBorder',           '0');
+    iframeEl.setAttribute('scrolling',             'no');
+    iframeEl.setAttribute('allowfullscreen',       '');
+    iframeEl.setAttribute('mozallowfullscreen',    '');
+    iframeEl.setAttribute('webkitallowfullscreen', '');
+    document.body.appendChild(iframeEl);
+    var iframeWin = iframeEl.contentWindow;
+
+    if (navigator.appName.indexOf('Internet Explorer') !== -1 &&
+        !navigator.appVersion.test(/MSIE [91]/)) {
+        /*jshint scripturl:true*/
+        iframeWin.contents = code;
+        iframeEl.src = 'javascript:window["contents"]';
+    }
+    else { //window.addEventListener) {
+        iframeWin.document.open('text/html', 'replace');
+        iframeWin.document.write(code);
+        iframeWin.document.close();
+    }
+    iframeWin._i = iframeEl;
+    return iframeWin;
+};
+
+
+
 var createCanvas = function(dims) {
     var cvsEl = document.createElement('canvas');
     cvsEl.width  = dims[0];
@@ -56,8 +91,9 @@ var postJSON = function(uri, data, cb) {
 var addWorker = function(code, cfg) {
     //kpi(cfg.kpiTo, 'hi there');
 
-    var worker = createWorker(code);
-    
+    var mode = 'w'; // w|i
+    var worker = (mode === 'w') ? createWorker(code) : createIframe(code);
+
     // worker aux resources
     var cvsEl, ctx;
     if (cfg.useCanvas) {
@@ -94,16 +130,15 @@ var addWorker = function(code, cfg) {
                     o.resultImg = b64Result;    
                 }
 
-                worker.terminate();
-
-                o.jobId = cfg.jobId;
-
                 postJSON(cfg.answerTo, o, function(err, res) {
                     //console.log(err || res);
-                    if (err) {
-                        return log(err);
+                    if (err) { log(err);  }
+                    else {     log('OK'); }
+                    try {
+                        worker.terminate();
+                    } catch (ex) {
+                        worker._i.parentNode.removeChild(worker._i);
                     }
-                    //log('OK!');
                 });
                 break;
 
@@ -112,5 +147,7 @@ var addWorker = function(code, cfg) {
         }
     };
 
-    worker.postMessage(cfg);
+    var pm = [cfg];
+    if (mode === 'i') { pm.push('*'); }
+    worker.postMessage.apply(worker, pm);
 };

@@ -212,7 +212,8 @@ var persistence = function() {
 
             var o = {
                 tpl:            tpl,
-                remainingParts: rp
+                remainingParts: rp,
+                numParts:       numParts
             };
             o = JSON.stringify(o);
 
@@ -229,6 +230,19 @@ var persistence = function() {
 
                 cb(null, JSON.parse(active));
             });
+        },
+
+        getActives: function(cb) {
+            log('getActives', []);
+            
+            var res = [];
+            actives.createReadStream({
+                keys:   false
+            })
+            .on('data',  function(a) { a = JSON.parse(a); delete a.tpl; res.push(a); })
+            .on('end',   function() {    cb(null, res);                   })
+            .on('error', function(err) { cb(err);                         });
+            //.on('close', function() {    cb('closed!');           });
         },
 
         updateActive: function(kId, jId, index, cb) {
@@ -449,6 +463,19 @@ var persistence = function() {
                 cb(null, result);
             });
         },
+
+        getResults: function(cb) {
+            log('getResults', []);
+            
+            var res = [];
+            results.createReadStream({
+                keys:   false
+            })
+            .on('data',  function(a) {   res.push(a);   })
+            .on('end',   function() {    cb(null, res); })
+            .on('error', function(err) { cb(err);       });
+            //.on('close', function() {    cb('closed!');           });
+        }
 
     };
 
