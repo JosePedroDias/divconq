@@ -98,6 +98,20 @@
             textarea:focus::-webkit-scrollbar-thumb {
                 background-color: rgba(0, 0, 0, 0.5);
             }
+
+            .progress {
+                background-color: #A00;
+                position: relative;
+                width: 200px;
+            }
+
+            .ok {
+                position: absolute;
+                left: 0;
+                top: 0;
+                height: 100%;
+                background-color: #0A0;
+            }
         </style>
     </head>
 
@@ -172,12 +186,28 @@
 
         <div id="active-jobs" class="tab hidden">
             <h2>active jobs</h2>
+
+            <table>
+                <tr id="ajh">
+                    <th>kId</th>
+                    <th>jId</th>
+                    <th>progress</th>
+                </tr>
+            </table>
         </div>
 
 
 
         <div id="finished-jobs" class="tab hidden">
             <h2>finished jobs</h2>
+
+            <table>
+                <tr id="fjh">
+                    <th>kId</th>
+                    <th>jId</th>
+                    <th>result</th>
+                </tr>
+            </table>
         </div>
 
 
@@ -314,11 +344,58 @@
                 else if (tgtId === 'finished-jobs') { updateFinishedJobs(); }
             });
 
+            var removeNextEls = function(el) {
+                var nextEl = el.nextSibling;
+                while (nextEl) {
+                    if (nextEl.nodeType !== 1) {
+                        nextEl = nextEl.nextSibling;
+                        continue;
+                    }
+                    el = nextEl;
+                    nextEl = el.nextSibling;
+                    el.parentNode.removeChild(el);
+                }
+            }
+
             var updateActiveJobs = function() {
                 ajax('/active/all', function(err, res) {
                     if (err || res.error) { return alert(err || res.error); }
                     
-                    console.log(res);
+                    //console.log(res);
+
+                    var el = QS('#ajh');
+
+                    var tableEl = el.parentNode;
+                    removeNextEls(el);
+
+                    var trEl, tdEl, okEl, ok;
+
+                    res.result.forEach(function(o) {
+                        //console.log(o);
+
+                        trEl = document.createElement('tr');
+
+                        tdEl = document.createElement('td');
+                        tdEl.appendChild( document.createTextNode(o.kId) );
+                        trEl.appendChild(tdEl);
+
+                        tdEl = document.createElement('td');
+                        tdEl.appendChild( document.createTextNode(o.jId) );
+                        trEl.appendChild(tdEl);
+
+                        tdEl = document.createElement('td');
+                        tdEl.className = 'progress';
+                        ok = o.numParts - o.remainingParts.length;
+                        trEl.title = [ok, o.numParts].join(' / ');
+
+                        okEl = document.createElement('div');
+                        okEl.className = 'ok';
+                        okEl.style.width = (ok / o.numParts * 100).toFixed(2) + '%';
+                        tdEl.appendChild(okEl);
+                        trEl.appendChild(tdEl);
+
+                        tableEl.appendChild(trEl);
+                    });
                 });
             };
 
@@ -326,7 +403,39 @@
                 ajax('/result/all', function(err, res) {
                     if (err || res.error) { return alert(err || res.error); }
                     
-                    console.log(res);
+                    //console.log(res);
+
+                    var el = QS('#fjh');
+
+                    var tableEl = el.parentNode;
+                    removeNextEls(el);
+
+                    var trEl, tdEl;
+
+                    res.result.forEach(function(o) {
+                        //console.log(o);
+
+                        trEl = document.createElement('tr');
+
+                        tdEl = document.createElement('td');
+                        tdEl.appendChild( document.createTextNode(o.kId) );
+                        trEl.appendChild(tdEl);
+
+                        tdEl = document.createElement('td');
+                        tdEl.appendChild( document.createTextNode(o.jId) );
+                        trEl.appendChild(tdEl);
+
+                        tdEl = document.createElement('td');
+                        if (o.result.substring(0, 10) === 'data:image') {
+                            tdEl.innerHTML = '<img src="' + o.result + '">';
+                        }
+                        else {
+                            tdEl.appendChild( document.createTextNode(o.result) ); 
+                        }
+                        trEl.appendChild(tdEl);
+
+                        tableEl.appendChild(trEl);
+                    });
                 });
             };
         </script>

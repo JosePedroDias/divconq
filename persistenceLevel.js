@@ -236,10 +236,15 @@ var persistence = function() {
             log('getActives', []);
             
             var res = [];
-            actives.createReadStream({
-                keys:   false
+            actives.createReadStream({})
+            .on('data', function(o) {
+                var v = JSON.parse(o.value);
+                delete v.tpl;
+                var i = o.key.split('_');
+                v.kId = parseInt(i[0], 10);
+                v.jId = parseInt(i[1], 10);
+                res.push(v);
             })
-            .on('data',  function(a) { a = JSON.parse(a); delete a.tpl; res.push(a); })
             .on('end',   function() {    cb(null, res);                   })
             .on('error', function(err) { cb(err);                         });
             //.on('close', function() {    cb('closed!');           });
@@ -469,7 +474,14 @@ var persistence = function() {
             
             var res = [];
             results.createReadStream({})
-            .on('data',  function(o) {   res.push({k:o.key, v:o.value}); })
+            .on('data', function(o) {
+                var i = o.key.split('_');
+                res.push({
+                    kId:    parseInt(i[0], 10),
+                    jId:    parseInt(i[1], 10),
+                    result: o.value
+                });
+            })
             .on('end',   function() {    cb(null, res); })
             .on('error', function(err) { cb(err);       });
             //.on('close', function() {    cb('closed!');           });

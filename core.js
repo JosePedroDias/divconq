@@ -117,6 +117,7 @@ var addWorker = function(code, cfg) {
                 break;
 
             case 'done':
+                delete o.op;
                 if (o.id) { // imageData returned
                     // draw to canvas and get base64 JPEG back
                     ctx.putImageData(o.id, 0, 0);

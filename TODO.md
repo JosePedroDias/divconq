@@ -1,2 +1,11 @@
 * iframe mode 90%
-* manage GUI lacks job status and results tabs
+
+* manage GUI:
+	* load kind
+	* load job
+	* delete kind
+	* delete job
+
+* backend
+	* store KPIs
+	* validate js and json submitted

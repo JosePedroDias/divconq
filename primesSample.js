@@ -23,29 +23,32 @@ var worker = function() {/*
 // example based on https://gist.github.com/joaojeronimo/7930840#file-run-js
 
 var onMessage = function(o) {
-    var number = o.n;
-    
-    var isPrime = true; // assume it's prime, we'll try to disprove
+    var isPrime = (function(n) {
+        if (n % 1 || n < 2) { return false; }
+        if (n % 2 === 0) { return n === 2; }
+        if (n % 3 === 0) { return n === 3; }
+        var m = Math.sqrt(n);
+        for (var i = 5; i <= m; i += 6) {
+            if ( (n % i === 0) || (n % (i + 2) === 0) ) { return false; }
+        }
+        return true;
+    })(o.n);
 
-    var i = number; // we'll iterate through all the numbers before it
-    while (--i) {
-        // every number is divisible by itself and one, we don't want to divide it by zero
-        if (i === 0 || i === 1 || i === number)
-            continue; // continue actually means skip the rest of this iteration and keep looping
-
-        // if it's divisible by any other number
-        if (!(number % i))
-            isPrime = false; // then it's not a prime number
-    }
-
-    done(isPrime ? number : null);
+    done({
+        n:       o.n,
+        isPrime: isPrime
+    });
 };
 */};
 
 var conquerFn = function() {/*
-    return cfg.filter(function(o) {
-        return (o.n !== null);
+    var primes = [];
+    results.forEach(function(o) {
+        if (o.isPrime) {
+            primes.push(o.n);
+        }
     });
+    return JSON.stringify(primes);
 */};
 
 var cfg = function() {/*

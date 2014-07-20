@@ -5,7 +5,7 @@
 var request = require('request');
 var async   = require('async');
 
-var sample = require('./fractal'+'Sample');
+var sample = require('./primes'+'Sample');
 
 
 
