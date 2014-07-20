@@ -12,3 +12,4 @@
 
 * transaction support on parsing of job?
 
+* getAnActive should move out of persistenceLevel (too much app logic)

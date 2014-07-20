@@ -59,9 +59,8 @@ var prepareJob = function(kId, jId, kind, cfg) {
     vm.runInNewContext(
         [
             'var cfg = ', cfg.trim(), ';\n',
-            'var divideWork = function(cfg, index) {\n',
+            'var divideWork = function(cfg) {\n',
             kind.divideFn.trim(), ';\n',
-            'return cfgs;\n',
             '};\n',
             'var cfgs = divideWork(cfg);'
         ].join(''),

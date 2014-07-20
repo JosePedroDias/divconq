@@ -51,8 +51,9 @@ Besides, the input and output of the payloads should be somewhat small (CPU-boun
 
 ## notes
 
+* divide is supposed to return an array of cfg objects
+* conquer is supposed to return the result. if not string, serialize it with JSON.strigify yourself.
 * configurations must be JSON objects (both the big one and the resulting parts after divide)
 * configurations feature some special attributes:
     * mode - if set to iframe will use iframe instead of webworker to do the processing
     * useCanvas - if set expects mime type such as 'image/png' or 'image/jpeg'.
-* for flexibility, results aren't parsed as JSON. they're returned as strings so images and other data can be stored as is

@@ -302,7 +302,7 @@ var persistence = function() {
 
                 var kjId = randInArr(ap);
 
-                console.log('1. out of activePool ' + JSON.stringify(ap) + ' elected ' + kjId);
+                //console.log('1. out of activePool ' + JSON.stringify(ap) + ' elected ' + kjId);
 
                 actives.get(kjId, function(err, active) {
                     if (err) { return cb(err); }
@@ -311,7 +311,7 @@ var persistence = function() {
 
                     var index = randInArr( active.remainingParts );
 
-                    console.log('2. out of remainingParts ' + JSON.stringify(active.remainingParts) + ' elected ' + index);
+                    //console.log('2. out of remainingParts ' + JSON.stringify(active.remainingParts) + ' elected ' + index);
 
                     var tpl = active.tpl;
                     var kji = [kjId, index].join('_');
@@ -321,7 +321,7 @@ var persistence = function() {
 
                         tpl = tpl.replace( new RegExp('({{CFG}})', 'g'), part );
 
-                        console.log('3. applying template with part');
+                        //console.log('3. applying template with part');
                         
                         cb(null, tpl);
                     });

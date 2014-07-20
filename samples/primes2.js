@@ -10,12 +10,18 @@ var fetch = function(fn) {
 
 
 var divideFn = function() {/*
-    var l = cfg.max - cfg.min + 1;
-    var n = cfg.min;
-    var cfgs = new Array(l);
-
-    for (var i = 0; i < l; ++i) {
-        cfgs[i] = {i:i, n:n++};
+    var M, m = cfg.min;
+    var cfgs = [];
+    while (1) {
+        M = m + cfg.each - 1;
+        if (M >= cfg.max) {
+            M = cfg.max;
+        }
+        cfgs.push({min:m, max:M});
+        if (M === cfg.max) {
+            break;
+        }
+        m = M + 1;
     }
 
     return cfgs;
@@ -24,7 +30,8 @@ var divideFn = function() {/*
 var worker = function() {/*
 
 var onMessage = function(o) {
-    var isPrime = (function(n) {
+
+    var isPrime = function(n) {
         if (n % 1 || n < 2) { return false; }
         if (n % 2 === 0) { return n === 2; }
         if (n % 3 === 0) { return n === 3; }
@@ -33,29 +40,34 @@ var onMessage = function(o) {
             if ( (n % i === 0) || (n % (i + 2) === 0) ) { return false; }
         }
         return true;
-    })(o.n);
+    };
+    
+    var primes = [];
+    for (var n = o.min; n <= o.max; ++n) {
+        if (isPrime(n)) {
+            primes.push(n);
+        }
+    }
 
     done({
-        n:       o.n,
-        isPrime: isPrime
+        primes: primes
     });
 };
 */};
 
 var conquerFn = function() {/*
     var primes = [];
-    results.forEach(function(o) {
-        if (o.isPrime) {
-            primes.push(o.n);
-        }
+    results.forEach(function(result) {
+        primes = primes.concat(result.primes);
     });
     return JSON.stringify(primes);
 */};
 
 var cfg = function() {/*
 {
-    min: 295075130,
-    max: 295075152
+    min:  110000,
+    max:  116000,
+    each:   1000
 }
 */};
 

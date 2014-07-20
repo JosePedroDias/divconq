@@ -36,6 +36,8 @@ var createIframe = function(code) {
     var iframeEl = document.createElement('iframe');
     var s = iframeEl.style;
     s.border = 0;
+    s.float = 'left';
+    s.visibility = 'hidden';
     iframeEl.setAttribute('frameBorder',           '0');
     iframeEl.setAttribute('scrolling',             'no');
     iframeEl.setAttribute('allowfullscreen',       '');
@@ -75,7 +77,6 @@ var postJSON = function(uri, data, cb) {
     var xhr = new XMLHttpRequest();
     xhr.open('POST', uri, true);
     var cbInner = function() {
-        //console.log(xhr.readyState, xhr.status);
         if (xhr.readyState === 4 && xhr.status === 200) {
             return cb(null, JSON.parse(xhr.response));
         }

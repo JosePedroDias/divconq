@@ -30,6 +30,8 @@ var divideFn = function() {/*
             ir:        ir,
             ii:        ii
         };
+
+        return cfgs;
     }
 */};
 
