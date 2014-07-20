@@ -154,6 +154,7 @@ var cfg = function() {/*
 */};
 
 var kind = {
+    name:      'fractal',
     divideFn:  fetch(divideFn),
     worker:    fetch(worker),
     conquerFn: fetch(conquerFn)

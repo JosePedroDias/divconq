@@ -52,9 +52,9 @@ var getNextId = function(name, cb) {
 
 
 
-//var log = function() {};
+var log = function() {};
 
-var log = function(name, args) {
+/*var log = function(name, args) {
     var a, r = [name, '('];
     for (var i = 0, I = args.length; i < I; ++i) {
         a = args[i];
@@ -73,7 +73,7 @@ var log = function(name, args) {
     r.push(   csl.red[1]);
 
     console.log( r.join('') );
-};
+};*/
 
 
 var persistence = function() {
@@ -148,9 +148,9 @@ var persistence = function() {
                     name: o.name
                 });
             })
-            .on('end',   function() {    cb(null, res);             })
-            .on('error', function(err) { cb(err);                   })
-            .on('close', function() {    cb('closed!');             });
+            .on('end',   function() {    cb(null, res); })
+            .on('error', function(err) { cb(err);       })
+            .on('close', function() {    cb('closed!'); });
         },
 
 
@@ -168,14 +168,7 @@ var persistence = function() {
 
                 var kjId = [kId, jId].join('_');
 
-                var o = {
-                    id:  jId,
-                    kId: kId,
-                    cfg: cfg
-                };
-                o = JSON.stringify(o);
-
-                jobs.put(kjId, o, function(err) {
+                jobs.put(kjId, JSON.stringify(cfg), function(err) {
                     cb(err, jId);
                 });
             });
@@ -194,6 +187,24 @@ var persistence = function() {
 
                 cb(null, job);
             });
+        },
+
+        getJobs: function(cb) { // kind/all (GET)
+            log('getJobs', []);
+            
+            var res = [];
+            jobs.createReadStream({})
+            .on('data',  function(o) {
+                var i = o.key.split('_');
+                res.push({
+                    kId: parseInt(i[0], 10),
+                    jId: parseInt(i[1], 10),
+                    cfg: JSON.parse(o.value)
+                });
+            })
+            .on('end',   function() {    cb(null, res); })
+            .on('error', function(err) { cb(err);       })
+            .on('close', function() {    cb('closed!'); });
         },
 
 

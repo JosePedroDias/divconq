@@ -59,6 +59,7 @@ var cfg = function() {/*
 */};
 
 var kind = {
+    name:      'primes',
     divideFn:  fetch(divideFn),
     worker:    fetch(worker),
     conquerFn: fetch(conquerFn)

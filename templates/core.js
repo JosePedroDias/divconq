@@ -1,7 +1,7 @@
 log = function(m) {
+    //throw 'boom';
     //console.log(m);
-    m = m.replace(/\n/g, '<br/>');
-    document.body.insertAdjacentHTML('beforeend', ['<pre>', m, '</pre>'].join(''));
+    m = m.replace(/\n/g, '<br/>'); document.body.insertAdjacentHTML('beforeend', ['<pre>', m, '</pre>'].join(''));
 };
 
 
@@ -91,8 +91,7 @@ var postJSON = function(uri, data, cb) {
 var addWorker = function(code, cfg) {
     //kpi(cfg.kpiTo, 'hi there');
 
-    var mode = 'w'; // w|i
-    var worker = (mode === 'w') ? createWorker(code) : createIframe(code);
+    var worker = (cfg.mode === 'iframe') ? createIframe(code) : createWorker(code);
 
     // worker aux resources
     var cvsEl, ctx;
@@ -103,7 +102,7 @@ var addWorker = function(code, cfg) {
     }
 
     // webworker I/O
-    worker.onmessage = function(ev) {
+    worker.addEventListener('message', function(ev) {
         var o = ev.data;
         //console.log(o);
 
@@ -132,9 +131,8 @@ var addWorker = function(code, cfg) {
                 }
 
                 postJSON(cfg.answerTo, o, function(err, res) {
-                    //console.log(err || res);
-                    if (err) { log(err);  }
-                    else {     log('OK'); }
+                    //if (err) { log(err);  }
+                    //else {     log('OK'); }
                     try {
                         worker.terminate();
                     } catch (ex) {
@@ -144,11 +142,11 @@ var addWorker = function(code, cfg) {
                 break;
 
             default:
-                log('unsupported op: "' + o.op + '"');
+                //log('unsupported op: "' + o.op + '"');
         }
-    };
+    });
 
-    var pm = [cfg];
-    if (mode === 'i') { pm.push('*'); }
-    worker.postMessage.apply(worker, pm);
+    var args = [cfg];
+    if (cfg.mode === 'iframe') { args.push('*'); }
+    worker.postMessage.apply(worker, args);
 };

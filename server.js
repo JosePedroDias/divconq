@@ -11,8 +11,7 @@ var Canvas     = require('canvas'); // sudo apt-get install libgif-dev libjpeg-d
 
 var csl    = require('./csl');
 var pers   = require('./persistenceLevel')();
-var sample = require('./fractal'+'Sample');
-
+var sample = require('./samples/primes');
 
 
 
@@ -47,10 +46,10 @@ var domain = ['http://', getMyIPs().lo, ':', PORT].join('');
 
 
 
-var files = {
-    tpl:    loadFile('tpl.js'),
-    core:   loadFile('core.js'),
-    manage: loadFile('manage.html')
+var templates = {
+    tpl:    loadFile('templates/tpl.js'),
+    core:   loadFile('templates/core.js'),
+    manage: loadFile('templates/manage.html')
 };
 
 
@@ -58,7 +57,6 @@ var files = {
 var prepareJob = function(kId, jId, kind, cfg) {
     var sandbox = {};
     vm.runInNewContext(
-    //console.log(
         [
             'var cfg = ', cfg.trim(), ';\n',
             'var divideWork = function(cfg, index) {\n',
@@ -67,15 +65,14 @@ var prepareJob = function(kId, jId, kind, cfg) {
             '};\n',
             'var cfgs = divideWork(cfg);'
         ].join(''),
-    //);
         sandbox
     );
     
     var answerTo = [domain, 'answer', kId, jId].join('/');
     var kpiTo    = [domain, 'kpi',    kId, jId].join('/');
 
-    var tpl = expandTemplate(files.tpl, {
-        CORE:   files.core,
+    var tpl = expandTemplate(templates.tpl, {
+        CORE:   templates.core,
         WORKER: kind.worker
     });
 
@@ -103,7 +100,7 @@ var srv = http.createServer(function(req, res) {
     parts.shift();
 
     var op = parts[0];
-    console.log([ csl.green[0], '\n\n-> [', parts.join(','), ']', csl.green[1] ].join(''));
+    //console.log([ csl.green[0], '\n\n-> [', parts.join(','), ']', csl.green[1] ].join(''));
 
     if (op === 'favicon.ico') {
         res.writeHead(404);
@@ -148,7 +145,7 @@ var srv = http.createServer(function(req, res) {
             });
             req.on('end', function() {
                 var answer = parts2.join('');
-                console.log('0. received ' + answer.length + ' bytes');
+                //console.log('0. received ' + answer.length + ' bytes');
 
                 var kId = parts[1];
                 var jId = parts[2];
@@ -157,7 +154,7 @@ var srv = http.createServer(function(req, res) {
                 pers.createAnswer(kId, jId, index, answer, function(err) {
                     if (err) { throw err; }
 
-                    console.log('1. answer saved');
+                    //console.log('1. answer saved');
 
                     pers.updateActive(kId, jId, index, function(err, nrPartsLeft) {
                         if (err) { throw err; }
@@ -177,22 +174,22 @@ var srv = http.createServer(function(req, res) {
                         pers.updateActivePool('remove', kId, jId, function(err) {
                             if (err) { throw err; }
 
-                            console.log('2. active removed - all job answer gathered, pool updated');
+                            //console.log('2. active removed - all job answer gathered, pool updated');
 
                             pers.getKind(kId, function(err, kind) {
                                 if (err) { throw err; }
 
-                                console.log('3. kind gathered');
+                                //console.log('3. kind gathered');
 
                                 pers.getJob(kId, jId, function(err, job) {
                                     if (err) { throw err; }
 
-                                    console.log('4. job gathered');
+                                    //console.log('4. job gathered');
 
                                     pers.getAnswers(kId, jId, function(err, answers) {
-                                        if (err) { console.log(err); throw err; }
+                                        if (err) { throw err; }
 
-                                        console.log('5. answers gathered');
+                                        //console.log('5. answers gathered');
 
                                         var sandbox = {
                                             console: console,
@@ -200,19 +197,17 @@ var srv = http.createServer(function(req, res) {
                                             Canvas:  Canvas,
                                             Image:   Canvas.Image
                                         };
-                                        //console.log(
                                         vm.runInNewContext(
-                                            ['var conquerWork = function(cfg, results) {', kind.conquerFn, '}; var result = conquerWork(', job.cfg.trim(), ', [', answers, ']);'].join(''),
+                                            ['var conquerWork = function(cfg, results) {', kind.conquerFn, '}; var result = conquerWork(', job.trim(), ', [', answers, ']);'].join(''),
                                             sandbox
                                         );
 
-                                        console.log('6. answers conquered into result');
+                                        //console.log('6. answers conquered into result');
 
-                                        // TODO NOT WORKING
                                         pers.createResult(kId, jId, sandbox.result, function(err) {
                                             if (err) { throw err; }
 
-                                            console.log('7. result saved. all done for this job!');
+                                            //console.log('7. result saved. all done for this job!');
 
                                             var body = '{"status":"ok"}';
                                             res.writeHead(200, {
@@ -252,9 +247,10 @@ var srv = http.createServer(function(req, res) {
             return cb('TODO SAVE KPI DATA');
         }
         else if (op === 'manage') {
-            body = files.manage;
+            body = templates.manage;
 
             body = expandTemplate(body, {
+                NAME:    sample.kind.name,
                 DIVIDE:  sample.kind.divideFn,
                 WORKER:  sample.kind.worker,
                 CONQUER: sample.kind.conquerFn,
@@ -270,7 +266,7 @@ var srv = http.createServer(function(req, res) {
         else if (op === 'kind') {
             if (parts[1] === 'new') {
                 form = new formidable.IncomingForm();
-                form.parse(req, function(err, fields/*, files*/) {
+                form.parse(req, function(err, fields) {
                     if (err) { return cb(err); }
 
                     pers.createKind(fields.name, fields.divideFn, fields.worker, fields.conquerFn, cb);
@@ -279,7 +275,7 @@ var srv = http.createServer(function(req, res) {
             }
             else if (parts[1] === 'update') {
                 form = new formidable.IncomingForm();
-                form.parse(req, function(err, fields/*, files*/) {
+                form.parse(req, function(err, fields) {
                     if (err) { return cb(err); }
 
                     pers.updateKind(parts[2], fields.name, fields.divideFn, fields.worker, fields.conquerFn, cb);
@@ -294,41 +290,41 @@ var srv = http.createServer(function(req, res) {
         else if (op === 'job') {
             if (parts[2] === 'new') {
                 form = new formidable.IncomingForm();
-                form.parse(req, function(err, fields/*, files*/) {
+                form.parse(req, function(err, fields) {
                     if (err) { return cb(err); }
 
                     var kId = parts[1];
 
-                    console.log('1. received job');
+                    //console.log('1. received job');
 
                     pers.createJob(kId, fields.cfg, function(err, jId) {
                         if (err) { return cb(err); }
 
-                        console.log('2. saved job');
+                        //console.log('2. saved job');
 
                         pers.getKind(kId, function(err, kind) {
                             if (err) { return cb(err); }
 
-                            console.log('3. fetched kind');
+                            //console.log('3. fetched kind');
 
                             var exp = prepareJob(kId, jId, kind, fields.cfg);
 
-                            console.log('4. divided job cfg');
+                            //console.log('4. divided job cfg');
 
                             pers.createActive(kId, jId, exp.tpl, exp.parts.length, function(err) {
                                 if (err) { return cb(err); }
 
-                                console.log('5. saved tpl and parts status');
+                                //console.log('5. saved tpl and parts status');
 
                                 pers.createParts(kId, jId, exp.parts, function(err) {
                                     if (err) { return cb(err); }
 
-                                    console.log('6. saved parts');
+                                    //console.log('6. saved parts');
 
                                     pers.updateActivePool('add', kId, jId, function(err) {
                                         if (err) { return cb(err); }
 
-                                        console.log('7.updated active pool. Job is ongoing!');
+                                        //console.log('7.updated active pool. Job is ongoing!');
 
                                         cb(null, jId);
                                     });
